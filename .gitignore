@@ -1,0 +1,6 @@
+﻿# JetBrains IDE
+.idea/
+
+# .NET Core
+bin/
+obj/
