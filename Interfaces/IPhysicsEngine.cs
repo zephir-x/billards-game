@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Numerics;
 
-namespace BilliardsGame.Physics
+namespace BilliardsGame.Interfaces
 {
     /// <summary>
     /// Core physics engine interface responsible for deterministic calculations.

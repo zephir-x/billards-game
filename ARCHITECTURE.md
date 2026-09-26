@@ -17,7 +17,7 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
 
 ## Tech Stack
 - **Language:** C# (.NET 9)
-- **Framework (hidden behind facades):** MonoGame, Raylib-cs, or SFML.Net for rendering and input handling.
+- **Framework (hidden behind facades):** MonoGame (preferred), Raylib-cs, or SFML.Net for rendering and input handling.
 - **Testing:** xUnit for deterministic physics and game state verification.
 
 ---
@@ -26,24 +26,25 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
 
 - **Phase 1: Physics Foundations & Scaffolding [Completed]**
   - [x] Solution and project scaffolding (`BilliardsGame.sln`, `BilliardsGame.Physics.csproj`, `BilliardsGame.Physics.Tests.csproj`).
-  - [x] Core interfaces: `IPhysicsEngine`, `IPhysicsBody`.
+  - [x] Core interfaces: `IPhysicsEngine`, `IPhysicsBody` (Extracted to `BilliardsGame.Interfaces.csproj`).
   - [x] Basic entities: `Ball` (dynamic circle body), `Cushion` (static boundary segment).
   - [x] Unit test suite for initial entity instantiation and impulse response.
 
-- **Phase 2: Physics Implementation & Verification [Next]**
-  - Numerical integration (Backward Euler) and table friction/drag decay.
-  - Collision detection & resolution: Ball-to-Ball (circle vs circle) and Ball-to-Cushion (circle vs segment).
-  - Bilateral elastic impulse resolution ($j \cdot \vec{n}$).
-  - Motion sleep threshold (`AreAllBodiesAtRest`).
-  - Comprehensive unit tests for physics determinism and impulse conservation.
+- **Phase 2: Physics Implementation & Verification [Completed]**
+  - [x] Numerical integration (Backward Euler) and table friction/drag decay.
+  - [x] Collision detection & resolution: Ball-to-Ball (circle vs circle) and Ball-to-Cushion (circle vs segment).
+  - [x] Bilateral elastic impulse resolution ($j \cdot \vec{n}$).
+  - [x] Motion sleep threshold (`AreAllBodiesAtRest`).
+  - [x] Comprehensive unit tests for physics determinism and impulse conservation.
 
-- **Phase 3: Game Core & Input [Pending]**
+- **Phase 3: Game Core & Input [Next]**
   - Module `/Core` setup (`BilliardsGame.Core.csproj`).
   - Entities & Contracts: `IPlayer`, `Player`.
   - State machine: `IGameManager` (`Menu`, `PlayerTurn`, `ChargingShot`, `SimulatingBalls`, `GameOver`).
   - Turn coordinator (switching turns after all balls stop moving, foul handling stub).
-  - Aiming & power charging controller: `ICueController`.
+  - Aiming & power charging controller: `ICueController` & `CueController`.
   - Hardware input abstraction: `IInputProvider`.
+  - Core logic unit tests testing the state machine, turns, and cue interactions without a rendering context.
 
 - **Phase 4: Rendering & Presentation [Pending]**
   - Module `/Renderer` setup (`BilliardsGame.Renderer.csproj`).
@@ -55,7 +56,7 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
 
 ## Module Specifications & Interface Contracts
 
-### 1. Physics Engine (`/Physics`)
+### 1. Interfaces & Physics Engine (`/Interfaces`, `/Physics`)
 The core of the simulation. Handles deterministic mathematical resolution of positions and velocities.
 
 #### Fixed Time Step

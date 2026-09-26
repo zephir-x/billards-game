@@ -1,6 +1,6 @@
-﻿using System.Numerics;
+using System.Numerics;
 
-namespace BilliardsGame.Physics
+namespace BilliardsGame.Interfaces
 {
     /// <summary>
     /// Represents a physical entity participating in the physics simulation.

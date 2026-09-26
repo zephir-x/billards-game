@@ -1,4 +1,5 @@
-﻿using System;
+using BilliardsGame.Interfaces;
+using System;
 using System.Numerics;
 
 namespace BilliardsGame.Physics
