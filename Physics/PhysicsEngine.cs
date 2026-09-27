@@ -49,14 +49,21 @@ namespace BilliardsGame.Physics
         /// <inheritdoc />
         public IReadOnlyCollection<IPhysicsBody> GetBodies()
         {
-            return _bodies;
+            return _bodies.AsReadOnly();
         }
 
         /// <inheritdoc />
         public bool AreAllBodiesAtRest(float sleepVelocityThreshold = 0.001f)
         {
             float sqrThreshold = sleepVelocityThreshold * sleepVelocityThreshold;
-            return _bodies.Where(b => !b.IsStatic).All(b => b.Velocity.LengthSquared() < sqrThreshold);
+            foreach (var body in _bodies)
+            {
+                if (!body.IsStatic && body.Velocity.LengthSquared() >= sqrThreshold)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <inheritdoc />
