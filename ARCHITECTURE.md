@@ -37,16 +37,16 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] Motion sleep threshold (`AreAllBodiesAtRest`).
   - [x] Comprehensive unit tests for physics determinism and impulse conservation.
 
-- **Phase 3: Game Core & Input [Next]**
-  - Module `/Core` setup (`BilliardsGame.Core.csproj`).
-  - Entities & Contracts: `IPlayer`, `Player`.
-  - State machine: `IGameManager` (`Menu`, `PlayerTurn`, `ChargingShot`, `SimulatingBalls`, `GameOver`).
-  - Turn coordinator (switching turns after all balls stop moving, foul handling stub).
-  - Aiming & power charging controller: `ICueController` & `CueController`.
-  - Hardware input abstraction: `IInputProvider`.
-  - Core logic unit tests testing the state machine, turns, and cue interactions without a rendering context.
+- **Phase 3: Game Core & Input [Completed]**
+  - [x] Module `/Core` setup (`BilliardsGame.Core.csproj`).
+  - [x] Entities & Contracts: `IPlayer`, `Player`.
+  - [x] State machine: `IGameManager` (`Menu`, `PlayerTurn`, `ChargingShot`, `SimulatingBalls`, `GameOver`).
+  - [x] Turn coordinator (switching turns after all balls stop moving, foul handling stub).
+  - [x] Aiming & power charging controller: `ICueController` & `CueController`.
+  - [x] Hardware input abstraction: `IInputProvider`.
+  - [x] Core logic unit tests testing the state machine, turns, and cue interactions without a rendering context.
 
-- **Phase 4: Rendering & Presentation [Pending]**
+- **Phase 4: Rendering & Presentation [Next]**
   - Module `/Renderer` setup (`BilliardsGame.Renderer.csproj`).
   - Rendering facade (`IRenderer`) and Alpha-blending interpolation for arbitrary refresh rates.
   - Minimal UI overlay: Active player turn label, shot power charging bar, Main Menu (`Play`, `Exit`).
