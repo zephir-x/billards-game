@@ -4,7 +4,7 @@
 The project is a 2D billiards simulation built in .NET, focusing on precise physics modeling and clean architecture. The game strictly adheres to SOLID principles, ensuring complete separation between the mathematical physics engine and the rendering loop.
 
 ### SOLID Principles Application
-- **Single Responsibility Principle (SRP):** Each module (`Physics`, `Core`, `Renderer`) has only one reason to change. The physics engine is completely unaware of rendering or input methods; the renderer only displays the state without mutating game rules.
+- **Single Responsibility Principle (SRP):** Each module (`Physics`, `Core`, `Renderer`, `App`) has only one reason to change. The physics engine is completely unaware of rendering or input methods; the renderer only displays the state without mutating game rules.
 - **Dependency Inversion Principle (DIP):** High-level modules communicate with underlying mechanisms exclusively through interfaces (e.g., `IPhysicsEngine`, `IInputProvider`, `IRenderer`), never through concrete implementations.
 - **Separation of Concerns:** The physical state and game logic (Model) are entirely independent of the platform drawing the application (View).
 
@@ -17,8 +17,8 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
 
 ## Tech Stack
 - **Language:** C# (.NET 9)
-- **Framework (hidden behind facades):** MonoGame (preferred), Raylib-cs, or SFML.Net for rendering and input handling.
-- **Testing:** xUnit for deterministic physics and game state verification.
+- **Framework (hidden behind facades):** Raylib-cs for hardware bindings, rendering, and input tracking.
+- **Testing:** xUnit and Moq for deterministic physics and game state verification without graphical context.
 
 ---
 
@@ -32,10 +32,10 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
 
 - **Phase 2: Physics Implementation & Verification [Completed]**
   - [x] Numerical integration (Backward Euler) and table friction/drag decay.
-  - [x] Collision detection & resolution: Ball-to-Ball (circle vs circle) and Ball-to-Cushion (circle vs segment).
+  - [x] Collision detection & resolution: Ball-to-Ball (circle vs circle) and Ball-to-Cushion (circle vs segment) via polimorphic traits `ICircleBody`, `ISegmentBody`.
   - [x] Bilateral elastic impulse resolution ($j \cdot \vec{n}$).
   - [x] Motion sleep threshold (`AreAllBodiesAtRest`).
-  - [x] Comprehensive unit tests for physics determinism and impulse conservation.
+  - [x] Comprehensive unit tests for physics determinism and impulse conservation (Tested on generic `IEnumerable`).
 
 - **Phase 3: Game Core & Input [Completed]**
   - [x] Module `/Core` setup (`BilliardsGame.Core.csproj`).
@@ -44,13 +44,14 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] Turn coordinator (switching turns after all balls stop moving, foul handling stub).
   - [x] Aiming & power charging controller: `ICueController` & `CueController`.
   - [x] Hardware input abstraction: `IInputProvider`.
-  - [x] Core logic unit tests testing the state machine, turns, and cue interactions without a rendering context.
+  - [x] Core logic unit tests testing the state machine, turns, and cue interactions without a rendering context (using Moq).
 
-- **Phase 4: Rendering & Presentation [Next]**
-  - Module `/Renderer` setup (`BilliardsGame.Renderer.csproj`).
-  - Rendering facade (`IRenderer`) and Alpha-blending interpolation for arbitrary refresh rates.
-  - Minimal UI overlay: Active player turn label, shot power charging bar, Main Menu (`Play`, `Exit`).
-  - Integration adapter for the chosen graphics backend.
+- **Phase 4: Rendering & Presentation [Completed]**
+  - [x] Module `/App` setup (`BilliardsGame.App.csproj`).
+  - [x] Rendering DIP contracts (`IRenderer`, `ISceneParameters`).
+  - [x] Frame drawing facade and Alpha-blending interpolation for mapping physics updates across varying hardware refresh rates.
+  - [x] Object drawing: Minimal UI overlay, dynamically targeted aiming mechanics.
+  - [x] Integration adapter implemented via Raylib-cs mappings and fixed x64 emulation configurations.
 
 ---
 
@@ -86,7 +87,6 @@ public interface IPhysicsBody
     Vector2 Velocity { get; set; }
     float Mass { get; }
     float Restitution { get; } // Collision elasticity [0.0, 1.0]
-    float Radius { get; }      // 0 for static lines/cushions
     bool IsStatic { get; }     // True for static geometry
     
     void ApplyImpulse(Vector2 impulse);
@@ -185,7 +185,7 @@ public interface IInputProvider
 
 ---
 
-### 3. Rendering Engine (`/Renderer`)
+### 3. Rendering Engine (`/App`)
 Receives a read-only state for visualization. Never mutates position vectors to avoid race conditions and coupling.
 
 #### Presentation Contract
