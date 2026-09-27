@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace BilliardsGame.Interfaces
 {
@@ -36,11 +36,6 @@ namespace BilliardsGame.Interfaces
         /// Restitution (elasticity) coefficient in the range [0.0, 1.0].
         /// </summary>
         float Restitution { get; }
-
-        /// <summary>
-        /// Radius of the body if it is circular; 0 for linear or static boundaries.
-        /// </summary>
-        float Radius { get; }
 
         /// <summary>
         /// Indicates whether the body is static (unmovable) or dynamic.

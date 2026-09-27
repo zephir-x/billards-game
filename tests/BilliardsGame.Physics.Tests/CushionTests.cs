@@ -25,7 +25,6 @@ namespace BilliardsGame.Physics.Tests
             Assert.Equal(new Vector2(50f, 0f), cushion.PreviousPosition);
             Assert.Equal(Vector2.Zero, cushion.Velocity);
             Assert.True(float.IsPositiveInfinity(cushion.Mass));
-            Assert.Equal(0f, cushion.Radius);
             Assert.Equal(restitution, cushion.Restitution);
             Assert.True(cushion.IsStatic);
         }

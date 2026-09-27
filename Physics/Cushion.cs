@@ -6,7 +6,7 @@ namespace BilliardsGame.Physics
     /// <summary>
     /// Represents a static boundary or cushion of the billiard table.
     /// </summary>
-    public class Cushion : IPhysicsBody
+    public class Cushion : ISegmentBody
     {
         /// <inheritdoc />
         public int Id { get; }
@@ -27,24 +27,15 @@ namespace BilliardsGame.Physics
         public float Restitution { get; }
 
         /// <inheritdoc />
-        public float Radius => 0f;
-
-        /// <inheritdoc />
         public bool IsStatic => true;
 
-        /// <summary>
-        /// Starting point of the cushion segment in world space.
-        /// </summary>
+        /// <inheritdoc />
         public Vector2 StartPoint { get; }
 
-        /// <summary>
-        /// Ending point of the cushion segment in world space.
-        /// </summary>
+        /// <inheritdoc />
         public Vector2 EndPoint { get; }
 
-        /// <summary>
-        /// Normalized normal vector of the cushion surface used for collision response.
-        /// </summary>
+        /// <inheritdoc />
         public Vector2 Normal { get; }
 
         /// <summary>

@@ -7,7 +7,7 @@ namespace BilliardsGame.Physics
     /// <summary>
     /// Represents a dynamic circular billiard ball participating in physics simulation.
     /// </summary>
-    public class Ball : IPhysicsBody
+    public class Ball : ICircleBody
     {
         /// <inheritdoc />
         public int Id { get; }

@@ -1,6 +1,7 @@
 using BilliardsGame.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace BilliardsGame.Physics
@@ -48,30 +49,14 @@ namespace BilliardsGame.Physics
         /// <inheritdoc />
         public IReadOnlyCollection<IPhysicsBody> GetBodies()
         {
-            return _bodies.AsReadOnly();
+            return _bodies;
         }
 
         /// <inheritdoc />
         public bool AreAllBodiesAtRest(float sleepVelocityThreshold = 0.001f)
         {
             float sqrThreshold = sleepVelocityThreshold * sleepVelocityThreshold;
-            bool allAtRest = true;
-
-            foreach (var body in _bodies)
-            {
-                if (body.IsStatic) continue;
-
-                if (body.Velocity.LengthSquared() < sqrThreshold)
-                {
-                    body.Velocity = Vector2.Zero;
-                }
-                else
-                {
-                    allAtRest = false;
-                }
-            }
-
-            return allAtRest;
+            return _bodies.Where(b => !b.IsStatic).All(b => b.Velocity.LengthSquared() < sqrThreshold);
         }
 
         /// <inheritdoc />
@@ -127,23 +112,23 @@ namespace BilliardsGame.Physics
                     
                     if (bodyA.IsStatic && bodyB.IsStatic) continue;
 
-                    if (!bodyA.IsStatic && !bodyB.IsStatic)
+                    if (bodyA is ICircleBody circleA && bodyB is ICircleBody circleB)
                     {
-                        ResolveBallBallCollision(bodyA, bodyB);
+                        ResolveBallBallCollision(circleA, circleB);
                     }
-                    else if (!bodyA.IsStatic && bodyB is Cushion cushionB)
+                    else if (bodyA is ICircleBody circleA2 && bodyB is ISegmentBody segmentB)
                     {
-                        ResolveBallCushionCollision(bodyA, cushionB);
+                        ResolveBallSegmentCollision(circleA2, segmentB);
                     }
-                    else if (!bodyB.IsStatic && bodyA is Cushion cushionA)
+                    else if (bodyB is ICircleBody circleB2 && bodyA is ISegmentBody segmentA)
                     {
-                        ResolveBallCushionCollision(bodyB, cushionA);
+                        ResolveBallSegmentCollision(circleB2, segmentA);
                     }
                 }
             }
         }
 
-        private void ResolveBallBallCollision(IPhysicsBody bodyA, IPhysicsBody bodyB)
+        private void ResolveBallBallCollision(ICircleBody bodyA, ICircleBody bodyB)
         {
             Vector2 delta = bodyA.Position - bodyB.Position;
             float distSquared = delta.LengthSquared();
@@ -182,24 +167,24 @@ namespace BilliardsGame.Physics
             }
         }
 
-        private void ResolveBallCushionCollision(IPhysicsBody ball, Cushion cushion)
+        private void ResolveBallSegmentCollision(ICircleBody ball, ISegmentBody segment)
         {
-            Vector2 edge = cushion.EndPoint - cushion.StartPoint;
+            Vector2 edge = segment.EndPoint - segment.StartPoint;
             float edgeLengthSq = edge.LengthSquared();
 
             if (edgeLengthSq < 0.000001f) return;
 
-            float t = Vector2.Dot(ball.Position - cushion.StartPoint, edge) / edgeLengthSq;
+            float t = Vector2.Dot(ball.Position - segment.StartPoint, edge) / edgeLengthSq;
             t = Math.Clamp(t, 0f, 1f);
 
-            Vector2 closestPoint = cushion.StartPoint + t * edge;
+            Vector2 closestPoint = segment.StartPoint + t * edge;
             Vector2 d = ball.Position - closestPoint;
             float distSquared = d.LengthSquared();
 
             if (distSquared < ball.Radius * ball.Radius)
             {
                 float dist = (float)Math.Sqrt(distSquared);
-                Vector2 n = dist > 0.00001f ? d / dist : cushion.Normal;
+                Vector2 n = dist > 0.00001f ? d / dist : segment.Normal;
 
                 // Korekcja pozycji
                 float penetration = ball.Radius - dist;
@@ -210,7 +195,7 @@ namespace BilliardsGame.Physics
 
                 if (vn < 0f)
                 {
-                    float e = Math.Min(ball.Restitution, cushion.Restitution);
+                    float e = Math.Min(ball.Restitution, segment.Restitution);
                     float j = -(1f + e) * vn * ball.Mass;
                     
                     Vector2 impulse = j * n;
