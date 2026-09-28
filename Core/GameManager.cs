@@ -1,4 +1,6 @@
-﻿using System.Linq;
+using System;
+using System.Linq;
+using System.Numerics;
 using BilliardsGame.Interfaces;
 
 namespace BilliardsGame.Core
@@ -7,6 +9,7 @@ namespace BilliardsGame.Core
     {
         public GameState CurrentState { get; private set; }
         public IPlayer ActivePlayer { get; private set; }
+        public IPlayer? Winner { get; private set; }
 
         private readonly IPhysicsEngine _physicsEngine;
         private readonly ICueController _cueController;
@@ -35,6 +38,7 @@ namespace BilliardsGame.Core
         {
             CurrentState = GameState.PlayerTurn;
             ActivePlayer = _player1;
+            Winner = null;
         }
 
         public void EndTurn()
@@ -106,6 +110,29 @@ namespace BilliardsGame.Core
                 {
                     if (_physicsEngine.AreAllBodiesAtRest())
                     {
+                        var bodies = _physicsEngine.GetBodies() ?? Array.Empty<IPhysicsBody>();
+                        bool hasWhite = bodies.Any(b => b.Id == 0);
+                        bool hasBlack = bodies.Any(b => b.Id == 1);
+
+                        if (!hasBlack)
+                        {
+                            Winner = ActivePlayer;
+                            CurrentState = GameState.GameOver;
+                            break;
+                        }
+
+                        if (!hasWhite)
+                        {
+                            var spawnPosition = new Vector2(200f, 300f);
+                            var respawnedCue = new HardcodedCueBall
+                            {
+                                Position = spawnPosition,
+                                PreviousPosition = spawnPosition,
+                                Velocity = Vector2.Zero
+                            };
+                            _physicsEngine.AddBody(respawnedCue);
+                        }
+
                         EndTurn();
                     }
                     break;
@@ -125,5 +152,27 @@ namespace BilliardsGame.Core
             }
             return bodies.FirstOrDefault(b => b.Id == 0);
         }
+
+        private class HardcodedCueBall : ICircleBody
+        {
+            public int Id => 0;
+            public Vector2 Position { get; set; }
+            public Vector2 PreviousPosition { get; set; }
+            public Vector2 Velocity { get; set; }
+            public float Mass => 0.15f;
+            public float Restitution => 0.8f;
+            public float Radius => 10f;
+            public bool IsStatic => false;
+
+            public void ApplyImpulse(Vector2 impulse)
+            {
+                if (Mass > 0f)
+                {
+                    Velocity += impulse / Mass;
+                }
+            }
+        }
     }
 }
+
+

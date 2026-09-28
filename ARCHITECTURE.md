@@ -66,11 +66,11 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] UI Power Bar: Render a dynamic Power Bar (filling up and changing color) completely outside the physical table boundaries.
 
 - **Phase 7: Win States, Logic Bugs & Menus [Next]**
-  - **Urgent Bug Fixes - White Ball Sinking (Scratch/Foul):** Currently, sinking the white ball permanently despawns it, soft-locking the `GameManager` in `SimulatingBalls` or crashing aiming calculations. The engine must track the white ball state and respawn it upon turn end if sank (Foul penalty logic).
-  - **Urgent Bug Fixes - Black Ball Sinking (Win Condition):** Sinking the object ball (black ball) currently does nothing but despawn it. The Engine must broadcast a win event, ending the session and jumping the state to `GameOver`.
-  - Main Menu Flow: Add a starting splash screen capturing user input for `Play` or `Exit` buttons explicitly blocking game loop start.
-  - In-Game Menu overlay: Override `ESC` key handling (preventing the default Raylib abrupt application exit) to raise an in-game pause overlay screen with clickable buttons: `Continue`, `Restart`, and `Exit`.
-  - HUD Implementation: Build a Top-Center GUI mapping the current scores, balls left, and formatted `Turn: Player X` tag.
+  - [x] **Urgent Bug Fixes - White Ball Sinking (Scratch/Foul):** Currently, sinking the white ball permanently despawns it, soft-locking the `GameManager` in `SimulatingBalls` or crashing aiming calculations. The engine must track the white ball state and respawn it upon turn end if sank (Foul penalty logic).
+  - [x] **Urgent Bug Fixes - Black Ball Sinking (Win Condition):** Sinking the object ball (black ball) currently does nothing but despawn it. The Engine must broadcast a win event, ending the session and jumping the state to `GameOver`.
+  - [x] Main Menu Flow: Add a starting splash screen capturing user input for `Play` or `Exit` buttons explicitly blocking game loop start.
+  - [x] In-Game Menu overlay: Override `ESC` key handling (preventing the default Raylib abrupt application exit) to raise an in-game pause overlay screen with clickable buttons: `Continue`, `Restart`, and `Exit`.
+  - [x] HUD Implementation: Build a Top-Center GUI mapping the current scores, balls left, and formatted `Turn: Player X` tag.
 
 ---
 
