@@ -17,5 +17,7 @@ namespace BilliardsGame.Interfaces
         void UpdateLogic(float deltaTime);
         void StartGame();
         void EndTurn();
+        event System.Action OnScratchFoul;
     }
 }
+

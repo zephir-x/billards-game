@@ -63,6 +63,11 @@ namespace BilliardsGame.App
             var inputProvider = new RaylibInputProvider();
             var cueController = new CueController();
             var gameManager = new GameManager(physicsEngine, cueController, inputProvider);
+            gameManager.OnScratchFoul += () => 
+            {
+                var whiteBall = new Ball(0, new Vector2(250, 300), 0.15f, 10f, 0.8f);
+                physicsEngine.AddBody(whiteBall);
+            };
 
             var sceneData = new SceneParameters(gameManager, physicsEngine, cueController);
             var renderer = new RaylibRenderer();
@@ -109,6 +114,7 @@ namespace BilliardsGame.App
                 }
 
                 float frameTime = Raylib.GetFrameTime();
+                if (frameTime > 0.1f) frameTime = 0.1f;
                 
                 renderer.IsPaused = isPaused;
 
@@ -132,6 +138,7 @@ namespace BilliardsGame.App
         }
     }
 }
+
 
 
 

@@ -78,7 +78,7 @@ namespace BilliardsGame.App
                 Raylib.DrawText(turnText, 10, 10, 20, Color.RayWhite);
 
                 // If charging shot, draw the cue
-                if (_sceneData.CurrentState.ToString() == "ChargingShot" || _sceneData.CurrentState.ToString() == "PlayerTurn")
+                if (_sceneData.CurrentState == GameState.ChargingShot || _sceneData.CurrentState == GameState.PlayerTurn)
                 {
                     var cueBall = GetCueBall();
                     if (cueBall != null && _sceneData.CueInfo != null)
