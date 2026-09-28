@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using BilliardsGame.App;
 using BilliardsGame.Core;
 using BilliardsGame.Physics;
@@ -13,20 +13,22 @@ namespace BilliardsGame.App
             Raylib.InitWindow(800, 600, "2D Billiards Game");
             Raylib.SetTargetFPS(144); 
             
-            var physicsEngine = new PhysicsEngine(1.5f);
+            // tableFriction = 1.2f (większe tarcie, mniejsza śliskość), sleepVelocityThreshold = 8.0f
+            var physicsEngine = new PhysicsEngine(1.2f, 8.0f);
 
-            var topCushion = new Cushion(10, new Vector2(50, 50), new Vector2(750, 50), 0.8f);
-            var rightCushion = new Cushion(11, new Vector2(750, 50), new Vector2(750, 550), 0.8f);
-            var bottomCushion = new Cushion(12, new Vector2(750, 550), new Vector2(50, 550), 0.8f);
-            var leftCushion = new Cushion(13, new Vector2(50, 550), new Vector2(50, 50), 0.8f);
+            var topCushion = new Cushion(10, new Vector2(100, 100), new Vector2(700, 100), 0.9f);
+            var rightCushion = new Cushion(11, new Vector2(700, 100), new Vector2(700, 500), 0.9f);
+            var bottomCushion = new Cushion(12, new Vector2(700, 500), new Vector2(100, 500), 0.9f);
+            var leftCushion = new Cushion(13, new Vector2(100, 500), new Vector2(100, 100), 0.9f);
 
             physicsEngine.AddBody(topCushion);
             physicsEngine.AddBody(rightCushion);
             physicsEngine.AddBody(bottomCushion);
             physicsEngine.AddBody(leftCushion);
 
-            var whiteBall = new Ball(0, new Vector2(200, 300), 15f, 1f, 0.8f);
-            var blackBall = new Ball(1, new Vector2(600, 300), 15f, 1f, 0.8f);
+            // Zmniejszono promień bili (radius) do 10f
+            var whiteBall = new Ball(0, new Vector2(250, 300), 0.15f, 10f, 0.8f);
+            var blackBall = new Ball(1, new Vector2(550, 300), 0.15f, 10f, 0.8f);
             
             physicsEngine.AddBody(whiteBall);
             physicsEngine.AddBody(blackBall);
@@ -41,7 +43,7 @@ namespace BilliardsGame.App
             renderer.Initialize(sceneData);
 
             float accumulator = 0f;
-            const float dt = 1f / 60f;
+            const float dt = 1f / 480f;
 
             while (!Raylib.WindowShouldClose())
             {

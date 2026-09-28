@@ -71,13 +71,13 @@ namespace BilliardsGame.Physics
         {
             if (fixedDeltaTime <= 0f) return;
 
-            // 1. Zapis pozycji poprzedniej (dla interpolacji renderingu)
+            // 1. Save previous positions (for rendering interpolation)
             foreach (var body in _bodies)
             {
                 body.PreviousPosition = body.Position;
             }
 
-            // 2. Aktualizacja prędkości i tarcie (Drag / Friction)
+            // 2. Update velocities and apply friction (Drag)
             float frictionFactor = Math.Max(0f, 1f - _tableFriction * fixedDeltaTime);
             foreach (var body in _bodies)
             {
@@ -85,14 +85,14 @@ namespace BilliardsGame.Physics
 
                 body.Velocity *= frictionFactor;
 
-                // Jeśli prędkość spadnie poniżej progu zatrzymania, wyzeruj ją
+                // If velocity drops below the rest threshold, zero it out
                 if (body.Velocity.LengthSquared() < _sleepVelocityThreshold * _sleepVelocityThreshold)
                 {
                     body.Velocity = Vector2.Zero;
                 }
             }
 
-            // 3. Aktualizacja pozycji (Wsteczne całkowanie Eulera)
+            // 3. Update positions (Backward Euler Integration)
             foreach (var body in _bodies)
             {
                 if (body.IsStatic) continue;
@@ -100,7 +100,7 @@ namespace BilliardsGame.Physics
                 body.Position += body.Velocity * fixedDeltaTime;
             }
 
-            // 4. Detekcja i Rozstrzyganie Kolizji (Collision Resolution Phase)
+            // 4. Collision Detection and Resolution Phase
             for (int i = 0; i < CollisionIterations; i++)
             {
                 ResolveCollisions();
@@ -147,20 +147,20 @@ namespace BilliardsGame.Physics
                 if (dist <= 0f) dist = 0.00001f;
                 Vector2 n = delta / dist;
 
-                // Korekcja penetracji (Positional Correction)
+                // Positional correction to prevent penetration
                 float penetration = rSum - dist;
                 Vector2 correction = n * (penetration * 0.5f);
                 
                 bodyA.Position += correction;
                 bodyB.Position -= correction;
 
-                // Prędkość względna
+                // Relative velocity
                 Vector2 relVel = bodyA.Velocity - bodyB.Velocity;
                 float vn = Vector2.Dot(relVel, n);
 
                 if (vn >= 0f) return;
 
-                // Połączona sprężystość
+                // Combined restitution
                 float e = Math.Min(bodyA.Restitution, bodyB.Restitution);
 
                 float invMassA = 1f / bodyA.Mass;
@@ -193,11 +193,11 @@ namespace BilliardsGame.Physics
                 float dist = (float)Math.Sqrt(distSquared);
                 Vector2 n = dist > 0.00001f ? d / dist : segment.Normal;
 
-                // Korekcja pozycji
+                // Positional correction
                 float penetration = ball.Radius - dist;
                 ball.Position += n * penetration;
 
-                // Prędkość wzdłuż normalnej
+                // Velocity along the normal
                 float vn = Vector2.Dot(ball.Velocity, n);
 
                 if (vn < 0f)

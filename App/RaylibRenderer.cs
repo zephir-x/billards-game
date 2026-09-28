@@ -16,7 +16,7 @@ namespace BilliardsGame.App
         public void DrawFrame(float interpolationAlpha)
         {
             Raylib.BeginDrawing();
-            Raylib.ClearBackground(new Color(34, 139, 34, 255)); // Forest Green table 
+            Raylib.ClearBackground(new Color(20, 105, 50, 255)); // Classic billiards green 
 
             if (_sceneData?.Bodies != null)
             {
@@ -25,7 +25,17 @@ namespace BilliardsGame.App
                 {
                     if (body is ISegmentBody segmentBody)
                     {
-                        Raylib.DrawLineEx(segmentBody.StartPoint, segmentBody.EndPoint, 10f, new Color(139, 69, 19, 255)); // Saddle Brown
+                        // Visually extend the line by half the thickness (7.5f) on both ends so thick corners overlap perfectly
+                        Vector2 direction = segmentBody.EndPoint - segmentBody.StartPoint;
+                        if (direction.LengthSquared() > 0.0001f)
+                        {
+                            direction = Vector2.Normalize(direction);
+                            float extension = 7.5f;
+                            Vector2 drawStart = segmentBody.StartPoint - direction * extension;
+                            Vector2 drawEnd = segmentBody.EndPoint + direction * extension;
+                            
+                            Raylib.DrawLineEx(drawStart, drawEnd, 15f, new Color(139, 69, 19, 255)); // Saddle Brown
+                        }
                     }
                 }
 
@@ -44,16 +54,14 @@ namespace BilliardsGame.App
             // Draw Statistics
             if (_sceneData != null)
             {
-                string stateText = "State: " + _sceneData.CurrentState.ToString();
                 string turnText = _sceneData.CurrentTurnPlayer != null 
                     ? "Turn: " + _sceneData.CurrentTurnPlayer.Name
                     : "Turn: None";
                 
-                Raylib.DrawText(stateText, 10, 10, 20, Color.RayWhite);
-                Raylib.DrawText(turnText, 10, 35, 20, Color.RayWhite);
+                Raylib.DrawText(turnText, 10, 10, 20, Color.RayWhite);
 
                 // If charging shot, draw the cue
-                if (_sceneData.CurrentState == GameState.ChargingShot || _sceneData.CurrentState == GameState.PlayerTurn)
+                if (_sceneData.CurrentState.ToString() == "ChargingShot" || _sceneData.CurrentState.ToString() == "PlayerTurn")
                 {
                     var cueBall = GetCueBall();
                     if (cueBall != null && _sceneData.CueInfo != null)
@@ -61,15 +69,15 @@ namespace BilliardsGame.App
                         Vector2 cueBallRenderedPos = (cueBall.PreviousPosition * (1f - interpolationAlpha)) + (cueBall.Position * interpolationAlpha);
                         
                         // Drawn cue stick (opposite to CueDirection) 
-                        // Offset from white ball: Radius + (CueInfo.Power * 50f)
-                        float offset = cueBall.Radius + (_sceneData.CueInfo.Power * 50f);
+                        // Zwiększony minimalnie margines dystansu kija od krawędzi bili (dodano + 8f)
+                        float offset = cueBall.Radius + 8f + (_sceneData.CueInfo.Power * 50f);
                         Vector2 cueDir = _sceneData.CueInfo.CueDirection;
                         if (cueDir != Vector2.Zero)
                         {
                             Vector2 cueStart = cueBallRenderedPos - (cueDir * offset);
                             Vector2 cueEnd = cueBallRenderedPos - (cueDir * (offset + 150f));
 
-                            Raylib.DrawLineEx(cueStart, cueEnd, 6f, new Color(205, 133, 63, 255)); // Peru brown stick
+                            Raylib.DrawLineEx(cueStart, cueEnd, 6f, new Color(210, 180, 140, 255)); // Light brown stick
                         }
                     }
                 }

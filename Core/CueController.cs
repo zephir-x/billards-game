@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Numerics;
 using BilliardsGame.Interfaces;
 
@@ -10,7 +10,7 @@ namespace BilliardsGame.Core
         public Vector2 CueDirection { get; private set; }
 
         private const float PowerChargeRate = 1.0f; // e.g., 1 unit per second
-        private const float MaxImpulse = 500f; // Tune this to actual game scale
+        private const float BaseForce = 500f; 
 
         public void UpdateAim(Vector2 cueBallPosition, Vector2 mousePosition)
         {
@@ -43,7 +43,7 @@ namespace BilliardsGame.Core
         {
             if (Power > 0f && cueBall != null && CueDirection != Vector2.Zero)
             {
-                Vector2 impulse = CueDirection * Power * MaxImpulse;
+                Vector2 impulse = CueDirection * (Power * BaseForce);
                 cueBall.ApplyImpulse(impulse);
             }
             Power = 0.0f;
