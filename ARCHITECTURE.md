@@ -13,7 +13,7 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
 - **Local Hotseat:** The game is played on a single physical device (players share the mouse). There is no multiplayer/networking logic in this iteration.
 - **Main Menu:** Ascetic design containing only two options: `Play` and `Exit`.
 - **Aiming (Cue Control):** The cue is kinematically linked to the cursor. The cue tip maintains a fixed distance from the cue ball's center, while the cue butt tracks the mouse cursor's directional vector.
-- **Shot Mechanics:** The player holds the Left Mouse Button (LMB) to charge shot power. Releasing the button executes the shot. If the button is held until the power reaches the critical maximum, the shot is aborted (power resets to 0), and the controller waits for a new mouse click to begin aiming again.
+- **Shot Mechanics (Overheat System):** The player holds the Left Mouse Button (LMB) to charge shot power, which is visualized by a dedicated Power Bar located outside the billiard table. Releasing the button before reaching the maximum executes the shot. However, if the power reaches the critical maximum (1.0), the cue becomes **Overheated/Blocked**, and a shot can no longer be executed. The power bar will then slowly drain back to 0.0. Only when it completely resets to zero does the cue become available for aiming and shooting again.
 
 ## Tech Stack
 - **Language:** C# (.NET 9)
@@ -52,6 +52,25 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] Frame drawing facade and Alpha-blending interpolation for mapping physics updates across varying hardware refresh rates.
   - [x] Object drawing: Minimal UI overlay, dynamically targeted aiming mechanics.
   - [x] Integration adapter implemented via Raylib-cs mappings and fixed x64 emulation configurations.
+
+- **Phase 5: Physics Scale & Game Feel [Completed]**
+  - [x] Fine-tune visual and physical scales: Adjust ball radii, cue rendering thickness, and window projections to maintain readable proportions on high-res displays.
+  - [x] Recalibrate shot power: Drastically increase the fundamental `ExecuteShot` impulse multiplier or tweak entity mass so balls correctly traverse the table with momentum.
+  - [x] Table proportions: Overhaul `Program.cs` instantiation to form a clean, perfectly aligned inner rectangular playfield without messy segment overlaps.
+
+- **Phase 6: Core Mechanics (UI Pockets & Overheat) [Completed]**
+  - [x] Engine integration: Introduce `IPocket` / `Hole` geometric entities explicitly to `PhysicsEngine` via dependency injection list.
+  - [x] Spatial mapping: Place 6 standard pockets systematically around the cushion vertices.
+  - [x] Sinking logic: If a ball's center converges with a pocket radius, immediately remove it from rendering and physics resolution (`_bodies`).
+  - [x] Overheat mechanic: Modifying `CueController` so that hitting `Power > 1.0` blocks shooting and triggers a slow cooldown drain back to `0.0`.
+  - [x] UI Power Bar: Render a dynamic Power Bar (filling up and changing color) completely outside the physical table boundaries.
+
+- **Phase 7: Win States, Logic Bugs & Menus [Next]**
+  - [x] **Urgent Bug Fixes - White Ball Sinking (Scratch/Foul):** Currently, sinking the white ball permanently despawns it, soft-locking the `GameManager` in `SimulatingBalls` or crashing aiming calculations. The engine must track the white ball state and respawn it upon turn end if sank (Foul penalty logic).
+  - [x] **Urgent Bug Fixes - Black Ball Sinking (Win Condition):** Sinking the object ball (black ball) currently does nothing but despawn it. The Engine must broadcast a win event, ending the session and jumping the state to `GameOver`.
+  - [x] Main Menu Flow: Add a starting splash screen capturing user input for `Play` or `Exit` buttons explicitly blocking game loop start.
+  - [x] In-Game Menu overlay: Override `ESC` key handling (preventing the default Raylib abrupt application exit) to raise an in-game pause overlay screen with clickable buttons: `Continue`, `Restart`, and `Exit`.
+  - [x] HUD Implementation: Build a Top-Center GUI mapping the current scores, balls left, and formatted `Turn: Player X` tag.
 
 ---
 

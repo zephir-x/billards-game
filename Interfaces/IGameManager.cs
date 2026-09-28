@@ -1,4 +1,4 @@
-﻿namespace BilliardsGame.Interfaces
+namespace BilliardsGame.Interfaces
 {
     public enum GameState 
     { 
@@ -13,8 +13,11 @@
     {
         GameState CurrentState { get; }
         IPlayer ActivePlayer { get; }
+        IPlayer? Winner { get; }
         void UpdateLogic(float deltaTime);
         void StartGame();
         void EndTurn();
+        event System.Action OnScratchFoul;
     }
 }
+

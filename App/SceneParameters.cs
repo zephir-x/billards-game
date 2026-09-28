@@ -18,7 +18,10 @@ namespace BilliardsGame.App
 
         public GameState CurrentState => _gameManager.CurrentState;
         public IPlayer CurrentTurnPlayer => _gameManager.ActivePlayer;
+        public IPlayer? Winner => _gameManager.Winner;
         public IReadOnlyCollection<IPhysicsBody> Bodies => _physicsEngine.GetBodies();
+        public IReadOnlyCollection<IPocket> Pockets => _physicsEngine.GetPockets();
         public ICueController CueInfo => _cueController;
     }
 }
+

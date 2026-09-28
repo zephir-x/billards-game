@@ -8,9 +8,10 @@ namespace BilliardsGame.Core
     {
         public float Power { get; private set; }
         public Vector2 CueDirection { get; private set; }
+        public bool IsOverheated { get; private set; }
 
         private const float PowerChargeRate = 1.0f; // e.g., 1 unit per second
-        private const float MaxImpulse = 500f; // Tune this to actual game scale
+        private const float BaseForce = 500f; 
 
         public void UpdateAim(Vector2 cueBallPosition, Vector2 mousePosition)
         {
@@ -27,23 +28,44 @@ namespace BilliardsGame.Core
 
         public void ChargeShot(float deltaTime)
         {
+            if (IsOverheated) return;
+
             Power += deltaTime * PowerChargeRate;
-            if (Power > 1.0f)
+            if (Power >= 1.0f)
             {
-                Power = 0.0f; // Overcharge resets
+                Power = 1.0f;
+                IsOverheated = true;
+            }
+        }
+
+        public void UpdateOverheat(float deltaTime)
+        {
+            if (IsOverheated)
+            {
+                Power -= deltaTime * PowerChargeRate * 0.5f; // slower cool down like syrup
+                if (Power <= 0f)
+                {
+                    Power = 0f;
+                    IsOverheated = false;
+                }
             }
         }
 
         public void ResetCharge()
         {
-            Power = 0.0f;
+            if (!IsOverheated)
+            {
+                Power = 0.0f;
+            }
         }
 
         public void ExecuteShot(IPhysicsBody cueBall)
         {
+            if (IsOverheated) return;
+
             if (Power > 0f && cueBall != null && CueDirection != Vector2.Zero)
             {
-                Vector2 impulse = CueDirection * Power * MaxImpulse;
+                Vector2 impulse = CueDirection * (Power * BaseForce);
                 cueBall.ApplyImpulse(impulse);
             }
             Power = 0.0f;

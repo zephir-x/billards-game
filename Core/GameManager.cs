@@ -1,4 +1,6 @@
-﻿using System.Linq;
+using System;
+using System.Linq;
+using System.Numerics;
 using BilliardsGame.Interfaces;
 
 namespace BilliardsGame.Core
@@ -7,6 +9,8 @@ namespace BilliardsGame.Core
     {
         public GameState CurrentState { get; private set; }
         public IPlayer ActivePlayer { get; private set; }
+        public IPlayer? Winner { get; private set; }
+        public event Action? OnScratchFoul;
 
         private readonly IPhysicsEngine _physicsEngine;
         private readonly ICueController _cueController;
@@ -35,6 +39,7 @@ namespace BilliardsGame.Core
         {
             CurrentState = GameState.PlayerTurn;
             ActivePlayer = _player1;
+            Winner = null;
         }
 
         public void EndTurn()
@@ -68,25 +73,36 @@ namespace BilliardsGame.Core
 
                 case GameState.ChargingShot:
                 {
+                    _cueController.UpdateOverheat(deltaTime);
+
                     var cueBall = GetCueBall();
                     if (cueBall != null)
                     {
                         _cueController.UpdateAim(cueBall.Position, _inputProvider.MouseWorldPosition);
                     }
 
-                    _cueController.ChargeShot(deltaTime);
-
-                    if (_cueController.Power == 0.0f) // Overcharge reset
+                    if (!_cueController.IsOverheated)
                     {
-                        CurrentState = GameState.PlayerTurn;
-                    }
-                    else if (_inputProvider.WasLeftMouseReleased)
-                    {
-                        if (cueBall != null)
+                        if (_inputProvider.IsLeftMouseDown)
                         {
-                            _cueController.ExecuteShot(cueBall);
+                            _cueController.ChargeShot(deltaTime);
                         }
-                        CurrentState = GameState.SimulatingBalls;
+                        
+                        if (_inputProvider.WasLeftMouseReleased)
+                        {
+                            if (cueBall != null)
+                            {
+                                _cueController.ExecuteShot(cueBall);
+                            }
+                            CurrentState = GameState.SimulatingBalls;
+                        }
+                    }
+                    else
+                    {
+                        if (_cueController.Power <= 0.0f)
+                        {
+                            CurrentState = GameState.PlayerTurn;
+                        }
                     }
                     break;
                 }
@@ -95,6 +111,22 @@ namespace BilliardsGame.Core
                 {
                     if (_physicsEngine.AreAllBodiesAtRest())
                     {
+                        var bodies = _physicsEngine.GetBodies() ?? Array.Empty<IPhysicsBody>();
+                        bool hasWhite = bodies.Any(b => b.Id == 0);
+                        bool hasBlack = bodies.Any(b => b.Id == 1);
+
+                        if (!hasBlack)
+                        {
+                            Winner = ActivePlayer;
+                            CurrentState = GameState.GameOver;
+                            break;
+                        }
+
+                        if (!hasWhite)
+                        {
+                            OnScratchFoul?.Invoke();
+                        }
+
                         EndTurn();
                     }
                     break;

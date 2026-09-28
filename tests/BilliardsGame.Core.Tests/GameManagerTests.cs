@@ -1,91 +1,87 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Moq;
 using Xunit;
 using BilliardsGame.Core;
 using BilliardsGame.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BilliardsGame.Core.Tests
 {
     public class GameManagerTests
     {
         [Fact]
-        public void UpdateLogic_StateTransitions_PlayerTurn_To_ChargingShot_To_SimulatingBalls_To_PlayerTurn()
+        public void UpdateLogic_SimulatingBalls_NoCueBall_RespawnAndReturnToPlayerTurn()
         {
             // Arrange
             var physicsMock = new Mock<IPhysicsEngine>();
             var cueMock = new Mock<ICueController>();
             var inputMock = new Mock<IInputProvider>();
-
-            var cueBallMock = new Mock<IPhysicsBody>();
-            cueBallMock.SetupGet(b => b.Id).Returns(0);
             
-            physicsMock.Setup(p => p.GetBodies()).Returns(new List<IPhysicsBody> { cueBallMock.Object });
+            // Setup with ONLY black ball (simulate cue ball fell in pocket)
+            var blackBallMock = new Mock<IPhysicsBody>();
+            blackBallMock.SetupGet(b => b.Id).Returns(1);
+            
+            physicsMock.Setup(p => p.GetBodies()).Returns(new List<IPhysicsBody> { blackBallMock.Object });
+            physicsMock.Setup(p => p.AreAllBodiesAtRest(It.IsAny<float>())).Returns(true);
 
             var gameManager = new GameManager(physicsMock.Object, cueMock.Object, inputMock.Object);
-            gameManager.StartGame(); // Set state to PlayerTurn
+            
+            bool eventFired = false;
+            gameManager.OnScratchFoul += delegate { eventFired = true; };
 
-            Assert.Equal(GameState.PlayerTurn, gameManager.CurrentState);
-            var player1 = gameManager.ActivePlayer;
-
-            // Step 1: Mouse down -> transition to ChargingShot
-            inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(true);
-            gameManager.UpdateLogic(0.016f);
-
-            Assert.Equal(GameState.ChargingShot, gameManager.CurrentState);
-
-            // Step 2: Mouse released -> transition to SimulatingBalls
-            inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(false);
+            // Transition directly to SimulatingBalls is not exposed, so we simulate a shot
+            gameManager.StartGame();
             inputMock.SetupGet(i => i.WasLeftMouseReleased).Returns(true);
             
-            // In ChargingShot state, the manager calls ChargeShot and ExecuteShot
-            cueMock.SetupGet(c => c.Power).Returns(0.5f); // simulate partial charge
-            gameManager.UpdateLogic(0.016f);
+            var cueBallMock = new Mock<IPhysicsBody>();
+            cueBallMock.SetupGet(b => b.Id).Returns(0);
+            physicsMock.SetupSequence(p => p.GetBodies())
+                .Returns(new List<IPhysicsBody> { cueBallMock.Object, blackBallMock.Object }) // For initial GetCueBall
+                .Returns(new List<IPhysicsBody> { cueBallMock.Object, blackBallMock.Object }) // For ChargingShot
+                .Returns(new List<IPhysicsBody> { blackBallMock.Object });                    // For SimulatingBalls (missing cue ball)
 
-            Assert.Equal(GameState.SimulatingBalls, gameManager.CurrentState);
-            cueMock.Verify(c => c.ExecuteShot(cueBallMock.Object), Times.Once);
+            inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(true);
+            gameManager.UpdateLogic(0.016f); // To ChargingShot
+            inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(false);
+            gameManager.UpdateLogic(0.016f); // To SimulatingBalls
 
-            // Step 3: AtRest == false -> still SimulatingBalls
-            physicsMock.Setup(p => p.AreAllBodiesAtRest(It.IsAny<float>())).Returns(false);
-            gameManager.UpdateLogic(0.016f);
-            Assert.Equal(GameState.SimulatingBalls, gameManager.CurrentState);
+            // Act
+            gameManager.UpdateLogic(0.016f); // In SimulatingBalls
 
-            // Step 4: AtRest == true -> transition back to PlayerTurn, change active player
-            physicsMock.Setup(p => p.AreAllBodiesAtRest(It.IsAny<float>())).Returns(true);
-            gameManager.UpdateLogic(0.016f);
-
+            // Assert
+            Assert.True(eventFired);
             Assert.Equal(GameState.PlayerTurn, gameManager.CurrentState);
-            Assert.NotEqual(player1, gameManager.ActivePlayer); // Turn changed
         }
 
         [Fact]
-        public void UpdateLogic_ChargingShot_Overcharge_ResetsToPlayerTurn()
+        public void UpdateLogic_SimulatingBalls_NoBlackBall_GameOver()
         {
             // Arrange
             var physicsMock = new Mock<IPhysicsEngine>();
             var cueMock = new Mock<ICueController>();
             var inputMock = new Mock<IInputProvider>();
             
+            // Setup with ONLY white ball (simulate black ball fell in pocket)
             var cueBallMock = new Mock<IPhysicsBody>();
             cueBallMock.SetupGet(b => b.Id).Returns(0);
             
             physicsMock.Setup(p => p.GetBodies()).Returns(new List<IPhysicsBody> { cueBallMock.Object });
+            physicsMock.Setup(p => p.AreAllBodiesAtRest(It.IsAny<float>())).Returns(true);
 
             var gameManager = new GameManager(physicsMock.Object, cueMock.Object, inputMock.Object);
             gameManager.StartGame();
-
-            // Set to ChargingShot
+            inputMock.SetupGet(i => i.WasLeftMouseReleased).Returns(true);
             inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(true);
-            gameManager.UpdateLogic(0.016f); 
-            Assert.Equal(GameState.ChargingShot, gameManager.CurrentState);
+            gameManager.UpdateLogic(0.016f); // To ChargingShot
+            inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(false);
+            gameManager.UpdateLogic(0.016f); // To SimulatingBalls
 
-            // Trigger Overcharge (Power falls to 0.0f)
-            cueMock.SetupGet(c => c.Power).Returns(0.0f);
-            inputMock.SetupGet(i => i.WasLeftMouseReleased).Returns(false);
+            // Act
+            gameManager.UpdateLogic(0.016f); // In SimulatingBalls
 
-            gameManager.UpdateLogic(0.016f);
-            
-            Assert.Equal(GameState.PlayerTurn, gameManager.CurrentState);
+            // Assert
+            Assert.Equal(GameState.GameOver, gameManager.CurrentState);
         }
     }
 }

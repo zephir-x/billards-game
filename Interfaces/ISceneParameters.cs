@@ -6,7 +6,9 @@ namespace BilliardsGame.Interfaces
     {
         GameState CurrentState { get; }
         IPlayer CurrentTurnPlayer { get; }
+        IPlayer? Winner { get; }
         IReadOnlyCollection<IPhysicsBody> Bodies { get; }
+        IReadOnlyCollection<IPocket> Pockets { get; }
         ICueController CueInfo { get; }
     }
 }
