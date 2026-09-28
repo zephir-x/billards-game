@@ -36,20 +36,29 @@ namespace BilliardsGame.Core.Tests
         }
 
         [Fact]
-        public void ChargeShot_IncreasesPowerLinearly_AndResetsOnOvercharge()
+        public void ChargeShot_IncreasesPowerLinearly_AndEntersOverheatOnMax()
         {
             var controller = new CueController();
             
-            // Assuming default ChargeSpeed is 1.0f units/s
             controller.ChargeShot(0.5f);
             Assert.Equal(0.5f, controller.Power, 4);
 
             controller.ChargeShot(0.4f);
             Assert.Equal(0.9f, controller.Power, 4);
 
-            // Going over 1.0
+            // Going over 1.0 triggers Overheat and clamps to 1.0
             controller.ChargeShot(0.2f);
-            Assert.Equal(0.0f, controller.Power, 4);
+            Assert.Equal(1.0f, controller.Power, 4);
+            Assert.True(controller.IsOverheated);
+            
+            // Updating Overheat lowers power
+            controller.UpdateOverheat(0.1f);
+            // Power should decrease by 0.1 * 1.0 * 0.5 = 0.05. New Power = 0.95
+            Assert.Equal(0.95f, controller.Power, 4);
+            
+            // Charging while overheated has no effect
+            controller.ChargeShot(0.5f);
+            Assert.Equal(0.95f, controller.Power, 4);
         }
 
         [Fact]

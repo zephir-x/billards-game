@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace BilliardsGame.Interfaces
 {
@@ -7,6 +7,7 @@ namespace BilliardsGame.Interfaces
         GameState CurrentState { get; }
         IPlayer CurrentTurnPlayer { get; }
         IReadOnlyCollection<IPhysicsBody> Bodies { get; }
+        IReadOnlyCollection<IPocket> Pockets { get; }
         ICueController CueInfo { get; }
     }
 }

@@ -68,25 +68,36 @@ namespace BilliardsGame.Core
 
                 case GameState.ChargingShot:
                 {
+                    _cueController.UpdateOverheat(deltaTime);
+
                     var cueBall = GetCueBall();
                     if (cueBall != null)
                     {
                         _cueController.UpdateAim(cueBall.Position, _inputProvider.MouseWorldPosition);
                     }
 
-                    _cueController.ChargeShot(deltaTime);
-
-                    if (_cueController.Power == 0.0f) // Overcharge reset
+                    if (!_cueController.IsOverheated)
                     {
-                        CurrentState = GameState.PlayerTurn;
-                    }
-                    else if (_inputProvider.WasLeftMouseReleased)
-                    {
-                        if (cueBall != null)
+                        if (_inputProvider.IsLeftMouseDown)
                         {
-                            _cueController.ExecuteShot(cueBall);
+                            _cueController.ChargeShot(deltaTime);
                         }
-                        CurrentState = GameState.SimulatingBalls;
+                        
+                        if (_inputProvider.WasLeftMouseReleased)
+                        {
+                            if (cueBall != null)
+                            {
+                                _cueController.ExecuteShot(cueBall);
+                            }
+                            CurrentState = GameState.SimulatingBalls;
+                        }
+                    }
+                    else
+                    {
+                        if (_cueController.Power <= 0.0f)
+                        {
+                            CurrentState = GameState.PlayerTurn;
+                        }
                     }
                     break;
                 }

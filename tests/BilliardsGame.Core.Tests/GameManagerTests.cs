@@ -59,7 +59,7 @@ namespace BilliardsGame.Core.Tests
         }
 
         [Fact]
-        public void UpdateLogic_ChargingShot_Overcharge_ResetsToPlayerTurn()
+        public void UpdateLogic_ChargingShot_Overheat_ResetsToPlayerTurn_WhenPowerReachesZero()
         {
             // Arrange
             var physicsMock = new Mock<IPhysicsEngine>();
@@ -79,10 +79,17 @@ namespace BilliardsGame.Core.Tests
             gameManager.UpdateLogic(0.016f); 
             Assert.Equal(GameState.ChargingShot, gameManager.CurrentState);
 
-            // Trigger Overcharge (Power falls to 0.0f)
-            cueMock.SetupGet(c => c.Power).Returns(0.0f);
+            // Trigger Overheat with Power > 0
+            cueMock.SetupGet(c => c.IsOverheated).Returns(true);
+            cueMock.SetupGet(c => c.Power).Returns(0.5f); // cooling down
             inputMock.SetupGet(i => i.WasLeftMouseReleased).Returns(false);
 
+            gameManager.UpdateLogic(0.016f);
+            
+            Assert.Equal(GameState.ChargingShot, gameManager.CurrentState); // Still charging state while cooling down
+
+            // Simulate cooled down fully
+            cueMock.SetupGet(c => c.Power).Returns(0.0f);
             gameManager.UpdateLogic(0.016f);
             
             Assert.Equal(GameState.PlayerTurn, gameManager.CurrentState);

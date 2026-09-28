@@ -13,7 +13,7 @@ namespace BilliardsGame.App
             Raylib.InitWindow(800, 600, "2D Billiards Game");
             Raylib.SetTargetFPS(144); 
             
-            // tableFriction = 1.2f (większe tarcie, mniejsza śliskość), sleepVelocityThreshold = 8.0f
+            // tableFriction = 1.2f, sleepVelocityThreshold = 8.0f
             var physicsEngine = new PhysicsEngine(1.2f, 8.0f);
 
             var topCushion = new Cushion(10, new Vector2(100, 100), new Vector2(700, 100), 0.9f);
@@ -26,7 +26,20 @@ namespace BilliardsGame.App
             physicsEngine.AddBody(bottomCushion);
             physicsEngine.AddBody(leftCushion);
 
-            // Zmniejszono promień bili (radius) do 10f
+            var hole1 = new Hole(new Vector2(100, 100), 16f);
+            var hole2 = new Hole(new Vector2(400, 100), 16f);
+            var hole3 = new Hole(new Vector2(700, 100), 16f);
+            var hole4 = new Hole(new Vector2(100, 500), 16f);
+            var hole5 = new Hole(new Vector2(400, 500), 16f);
+            var hole6 = new Hole(new Vector2(700, 500), 16f);
+
+            physicsEngine.AddPocket(hole1);
+            physicsEngine.AddPocket(hole2);
+            physicsEngine.AddPocket(hole3);
+            physicsEngine.AddPocket(hole4);
+            physicsEngine.AddPocket(hole5);
+            physicsEngine.AddPocket(hole6);
+            
             var whiteBall = new Ball(0, new Vector2(250, 300), 0.15f, 10f, 0.8f);
             var blackBall = new Ball(1, new Vector2(550, 300), 0.15f, 10f, 0.8f);
             

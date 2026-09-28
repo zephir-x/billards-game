@@ -58,18 +58,19 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] Recalibrate shot power: Drastically increase the fundamental `ExecuteShot` impulse multiplier or tweak entity mass so balls correctly traverse the table with momentum.
   - [x] Table proportions: Overhaul `Program.cs` instantiation to form a clean, perfectly aligned inner rectangular playfield without messy segment overlaps.
 
-- **Phase 6: Core Mechanics (UI, Pockets & Overheat) [Next]**
-  - Overheat mechanic: Modify `CueController` so that hitting `Power > 1.0` blocks shooting and triggers a slow cooldown drain back to `0.0`.
-  - UI Power Bar: Render a dynamic Power Bar (filling up and changing color) completely outside the physical table boundaries.
-  - Engine integration: Introduce `IPocket` / `Hole` geometric entities.
-  - Spatial mapping: Place 6 standard pockets systematically around the cushion vertices.
-  - Sinking logic: If a ball's center converges with a pocket radius, immediately remove it from rendering and physics resolution (`GetBodies()`).
+- **Phase 6: Core Mechanics (UI Pockets & Overheat) [Completed]**
+  - [x] Engine integration: Introduce `IPocket` / `Hole` geometric entities explicitly to `PhysicsEngine` via dependency injection list.
+  - [x] Spatial mapping: Place 6 standard pockets systematically around the cushion vertices.
+  - [x] Sinking logic: If a ball's center converges with a pocket radius, immediately remove it from rendering and physics resolution (`_bodies`).
+  - [x] Overheat mechanic: Modifying `CueController` so that hitting `Power > 1.0` blocks shooting and triggers a slow cooldown drain back to `0.0`.
+  - [x] UI Power Bar: Render a dynamic Power Bar (filling up and changing color) completely outside the physical table boundaries.
 
-- **Phase 7: GUI Overhaul & State Navigation [Pending]**
-  - Head-Up Display (HUD): Set up a clean, top-centered UI presenting active turn labels and individual player scores (sunk ball counts).
-  - Score routing: Route pocket sink events to `GameManager` to differentiate scratch fouls (white ball) from regular scoring (object balls).
-  - Main Menu Flow: Add a starting splash screen capturing user input for `Play` or `Exit`.
-  - In-Game Menu overlay: Override `ESC` key handling (preventing abrupt application exit) to raise an in-game pause screen with options `Continue`, `Restart`, and `Exit`.
+- **Phase 7: Win States, Logic Bugs & Menus [Next]**
+  - **Urgent Bug Fixes - White Ball Sinking (Scratch/Foul):** Currently, sinking the white ball permanently despawns it, soft-locking the `GameManager` in `SimulatingBalls` or crashing aiming calculations. The engine must track the white ball state and respawn it upon turn end if sank (Foul penalty logic).
+  - **Urgent Bug Fixes - Black Ball Sinking (Win Condition):** Sinking the object ball (black ball) currently does nothing but despawn it. The Engine must broadcast a win event, ending the session and jumping the state to `GameOver`.
+  - Main Menu Flow: Add a starting splash screen capturing user input for `Play` or `Exit` buttons explicitly blocking game loop start.
+  - In-Game Menu overlay: Override `ESC` key handling (preventing the default Raylib abrupt application exit) to raise an in-game pause overlay screen with clickable buttons: `Continue`, `Restart`, and `Exit`.
+  - HUD Implementation: Build a Top-Center GUI mapping the current scores, balls left, and formatted `Turn: Player X` tag.
 
 ---
 

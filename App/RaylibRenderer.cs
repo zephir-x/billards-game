@@ -39,6 +39,16 @@ namespace BilliardsGame.App
                     }
                 }
 
+                
+                // Draw Pockets
+                if (_sceneData.Pockets != null)
+                {
+                    foreach (var pocket in _sceneData.Pockets)
+                    {
+                        Raylib.DrawCircleV(pocket.Position, pocket.Radius, Color.Black);
+                    }
+                }
+
                 // Draw Balls
                 foreach (var body in _sceneData.Bodies)
                 {
@@ -69,7 +79,6 @@ namespace BilliardsGame.App
                         Vector2 cueBallRenderedPos = (cueBall.PreviousPosition * (1f - interpolationAlpha)) + (cueBall.Position * interpolationAlpha);
                         
                         // Drawn cue stick (opposite to CueDirection) 
-                        // Zwiększony minimalnie margines dystansu kija od krawędzi bili (dodano + 8f)
                         float offset = cueBall.Radius + 8f + (_sceneData.CueInfo.Power * 50f);
                         Vector2 cueDir = _sceneData.CueInfo.CueDirection;
                         if (cueDir != Vector2.Zero)
@@ -80,6 +89,26 @@ namespace BilliardsGame.App
                             Raylib.DrawLineEx(cueStart, cueEnd, 6f, new Color(210, 180, 140, 255)); // Light brown stick
                         }
                     }
+                }
+
+                // PowerBar UI
+                if (_sceneData.CueInfo != null)
+                {
+                    int barX = 250;
+                    int barY = 30;
+                    int barWidth = 300;
+                    int barHeight = 20;
+
+                    Raylib.DrawRectangle(barX, barY, barWidth, barHeight, Color.DarkGray);
+                    
+                    int fillWidth = (int)(barWidth * _sceneData.CueInfo.Power);
+                    Color fillColor = _sceneData.CueInfo.IsOverheated ? Color.Orange : new Color(100, 150, 200, 255);
+                    
+                    if (fillWidth > 0)
+                    {
+                        Raylib.DrawRectangle(barX, barY, fillWidth, barHeight, fillColor);
+                    }
+                    Raylib.DrawRectangleLines(barX, barY, barWidth, barHeight, Color.LightGray);
                 }
             }
 

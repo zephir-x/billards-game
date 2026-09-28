@@ -12,6 +12,7 @@ namespace BilliardsGame.Physics
     public class PhysicsEngine : IPhysicsEngine
     {
         private readonly List<IPhysicsBody> _bodies;
+        private readonly List<IPocket> _pockets;
         private readonly float _tableFriction;
         private readonly float _sleepVelocityThreshold;
 
@@ -25,6 +26,7 @@ namespace BilliardsGame.Physics
         public PhysicsEngine(float tableFriction = 0.25f, float sleepVelocityThreshold = 0.001f)
         {
             _bodies = new List<IPhysicsBody>();
+            _pockets = new List<IPocket>();
             _tableFriction = tableFriction;
             _sleepVelocityThreshold = sleepVelocityThreshold;
         }
@@ -50,6 +52,22 @@ namespace BilliardsGame.Physics
         public IReadOnlyCollection<IPhysicsBody> GetBodies()
         {
             return _bodies.AsReadOnly();
+        }
+
+        /// <inheritdoc />
+        public void AddPocket(IPocket pocket)
+        {
+            if (pocket == null) throw new ArgumentNullException(nameof(pocket));
+            if (!_pockets.Contains(pocket))
+            {
+                _pockets.Add(pocket);
+            }
+        }
+
+        /// <inheritdoc />
+        public IReadOnlyCollection<IPocket> GetPockets()
+        {
+            return _pockets.AsReadOnly();
         }
 
         /// <inheritdoc />
@@ -104,6 +122,23 @@ namespace BilliardsGame.Physics
             for (int i = 0; i < CollisionIterations; i++)
             {
                 ResolveCollisions();
+            }
+
+            // 5. Pocket Detection
+            for (int i = _bodies.Count - 1; i >= 0; i--)
+            {
+                var body = _bodies[i];
+                if (body.IsStatic) continue;
+
+                foreach (var pocket in _pockets)
+                {
+                    float distSq = (body.Position - pocket.Position).LengthSquared();
+                    if (distSq < pocket.Radius * pocket.Radius)
+                    {
+                        _bodies.RemoveAt(i);
+                        break;
+                    }
+                }
             }
         }
 
