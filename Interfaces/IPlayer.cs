@@ -1,4 +1,5 @@
-﻿namespace BilliardsGame.Interfaces
+using BilliardsGame.Interfaces.Enums;
+namespace BilliardsGame.Interfaces
 {
     public interface IPlayer
     {

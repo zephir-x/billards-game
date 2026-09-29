@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using BilliardsGame.Interfaces;
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 
 namespace BilliardsGame.App
 {

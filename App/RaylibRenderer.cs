@@ -1,3 +1,5 @@
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 using System;
 using System.Numerics;
 using BilliardsGame.Interfaces;
@@ -123,20 +125,20 @@ namespace BilliardsGame.App
             DrawQuad(r1, r2, r3, r4, railColor);
             DrawQuadLines(r1, r2, r3, r4, 3f, railBorder);
 
-            // 4. Pocket Holes (Drawn on top to stencil out perfect wood cutouts)
-                if (_sceneData?.Pockets != null)
+            // 4. Pocket Holes
+            if (_sceneData?.Pockets != null)
+            {
+                foreach (var pocket in _sceneData.Pockets)
                 {
-                    foreach (var pocket in _sceneData.Pockets)
-                    {
-                        float visualRadius = 23f; // Cover jaws cutout seamlessly
-                        Raylib.DrawCircleV(pocket.Position, visualRadius, Color.Black);
-                        Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, visualRadius * 0.9f, new Color(40, 40, 40, 200));
-                        Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, visualRadius * 0.6f, new Color(20, 20, 20, 100));
-                    }
+                    float visualRadius = 23f; // Cover jaws cutout seamlessly
+                    Raylib.DrawCircleV(pocket.Position, visualRadius, Color.Black);
+                    Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, visualRadius * 0.9f, new Color(40, 40, 40, 200));
+                    Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, visualRadius * 0.6f, new Color(20, 20, 20, 100));
                 }
+            }
 
 
-                if (_sceneData?.Bodies != null)
+            if (_sceneData?.Bodies != null)
             {
                 // Draw Balls
                 foreach (var body in _sceneData.Bodies)
@@ -160,13 +162,13 @@ namespace BilliardsGame.App
                             int colorIndex = n > 8 ? n - 8 : n;
                             ballColor = colorIndex switch 
                             {
-                                1 => new Color(255, 215, 0, 255),  // Yellow
-                                2 => new Color(0, 0, 255, 255),    // Blue
-                                3 => new Color(255, 0, 0, 255),    // Red
-                                4 => new Color(128, 0, 128, 255),  // Purple
-                                5 => new Color(255, 140, 0, 255),  // Orange
-                                6 => new Color(0, 128, 0, 255),    // Green
-                                7 => new Color(128, 0, 0, 255),    // Burgundy
+                                1 => new Color(255, 215, 0, 255),
+                                2 => new Color(0, 0, 255, 255),
+                                3 => new Color(255, 0, 0, 255),
+                                4 => new Color(128, 0, 128, 255),
+                                5 => new Color(255, 140, 0, 255),
+                                6 => new Color(0, 128, 0, 255),
+                                7 => new Color(128, 0, 0, 255),
                                 _ => Color.White
                             };
                         }
@@ -177,13 +179,11 @@ namespace BilliardsGame.App
                         }
                         else if (circleBody.BallType == BallType.Solid || circleBody.BallType == BallType.Black)
                         {
-                            // Solid & Black ball: Colored base, white center
                             Raylib.DrawCircleV(renderedPos, circleBody.Radius, ballColor);
                             Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, Color.RayWhite);
                         }
                         else if (circleBody.BallType == BallType.Striped)
                         {
-                            // Striped ball: White base, colored thick striped line bounded by circle
                             Raylib.DrawCircleV(renderedPos, circleBody.Radius, Color.RayWhite);
                             
                             float stripeHalf = circleBody.Radius * 0.65f;
@@ -195,8 +195,6 @@ namespace BilliardsGame.App
                                     new Vector2(renderedPos.X + chordX, renderedPos.Y + dy),
                                     ballColor);
                             }
-                            
-                            // White center
                             Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, Color.RayWhite);
                         }
                         
@@ -208,59 +206,62 @@ namespace BilliardsGame.App
                             float spacing = 1.0f;
                             Vector2 textSize = Raylib.MeasureTextEx(font, numStr, fontSize, spacing);
                             Vector2 textPos = new Vector2(renderedPos.X - textSize.X / 2f, renderedPos.Y - (textSize.Y / 2f) + 1.0f);
-                            
                             Raylib.DrawTextEx(font, numStr, textPos, fontSize, spacing, Color.Black);
                         }
                     }
                 }
             }
 
-            
+            if (_sceneData?.CurrentState == GameState.BallInHand)
+            {
+                Vector2 mouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), MainCamera);
+                Raylib.DrawCircleV(mouseWorld, 10f, new Color(255, 255, 255, 120));
+            }
 
-                // If charging shot, draw the cue
-                if (_sceneData != null && (_sceneData.CurrentState == GameState.ChargingShot || _sceneData.CurrentState == GameState.PlayerTurn))
+            // If charging shot, draw the cue
+            if (_sceneData != null && (_sceneData.CurrentState == GameState.ChargingShot || _sceneData.CurrentState == GameState.PlayerTurn))
+            {
+                var cueBall = GetCueBall();
+                if (cueBall != null && _sceneData.CueInfo != null)
                 {
-                    var cueBall = GetCueBall();
-                    if (cueBall != null && _sceneData.CueInfo != null)
+                    Vector2 cueBallRenderedPos = (cueBall.PreviousPosition * (1f - interpolationAlpha)) + (cueBall.Position * interpolationAlpha);
+                    
+                    float offset = cueBall.Radius + 8f + (_sceneData.CueInfo.Power * 50f);
+                    Vector2 cueDir = _sceneData.CueInfo.CueDirection;
+                    if (cueDir != Vector2.Zero)
                     {
-                        Vector2 cueBallRenderedPos = (cueBall.PreviousPosition * (1f - interpolationAlpha)) + (cueBall.Position * interpolationAlpha);
-                        
-                        float offset = cueBall.Radius + 8f + (_sceneData.CueInfo.Power * 50f);
-                        Vector2 cueDir = _sceneData.CueInfo.CueDirection;
-                        if (cueDir != Vector2.Zero)
+                        // Ghost Guide Line (White dotted)
+                        for (float d = cueBall.Radius + 12f; d < 120f; d += 15f)
                         {
-                            // Ghost Guide Line (White dotted)
-                            for (float d = cueBall.Radius + 12f; d < 120f; d += 15f)
-                            {
-                                Vector2 ghostPoint = cueBallRenderedPos + (cueDir * d);
-                                Raylib.DrawCircleV(ghostPoint, 2f, new Color(255, 255, 255, 120));
-                            }
-
-                            float cueLength = 300f; // Longer cue
-                            Vector2 cueStart = cueBallRenderedPos - (cueDir * offset);
-                            Vector2 cueEnd = cueBallRenderedPos - (cueDir * (offset + cueLength));
-
-                            // 1. Dark thick outline/shadow
-                            Raylib.DrawLineEx(cueStart, cueEnd, 8f, new Color(30, 15, 5, 255));
-
-                            // 2. Base wood color
-                            Raylib.DrawLineEx(cueStart, cueEnd, 6f, new Color(222, 184, 135, 255));
-
-                            // 3. Subtle decorative line down the center
-                            Raylib.DrawLineEx(cueStart, cueEnd, 2f, new Color(110, 55, 15, 255));
-
-                            // 4. Distinct cue butt (handle) at the back
-                            float buttLength = 100f;
-                            Vector2 cueHandleStart = cueBallRenderedPos - (cueDir * (offset + cueLength - buttLength));
-                            Raylib.DrawLineEx(cueHandleStart, cueEnd, 6f, new Color(25, 25, 25, 255)); // Black grip
-                            Raylib.DrawLineEx(cueHandleStart, cueEnd, 2f, new Color(50, 50, 50, 255)); // Grip highlight
-
-                            // 5. Cue tip (blue chalk)
-                            Vector2 cueTipEnd = cueStart + (cueDir * 4f);
-                            Raylib.DrawLineEx(cueStart, cueTipEnd, 6f, new Color(100, 150, 255, 255));
+                            Vector2 ghostPoint = cueBallRenderedPos + (cueDir * d);
+                            Raylib.DrawCircleV(ghostPoint, 2f, new Color(255, 255, 255, 120));
                         }
+
+                        float cueLength = 300f; // Longer cue
+                        Vector2 cueStart = cueBallRenderedPos - (cueDir * offset);
+                        Vector2 cueEnd = cueBallRenderedPos - (cueDir * (offset + cueLength));
+
+                        // 1. Dark thick outline/shadow
+                        Raylib.DrawLineEx(cueStart, cueEnd, 8f, new Color(30, 15, 5, 255));
+
+                        // 2. Base wood color
+                        Raylib.DrawLineEx(cueStart, cueEnd, 6f, new Color(222, 184, 135, 255));
+
+                        // 3. Subtle decorative line down the center
+                        Raylib.DrawLineEx(cueStart, cueEnd, 2f, new Color(110, 55, 15, 255));
+
+                        // 4. Distinct cue butt (handle) at the back
+                        float buttLength = 100f;
+                        Vector2 cueHandleStart = cueBallRenderedPos - (cueDir * (offset + cueLength - buttLength));
+                        Raylib.DrawLineEx(cueHandleStart, cueEnd, 6f, new Color(25, 25, 25, 255)); // Black grip
+                        Raylib.DrawLineEx(cueHandleStart, cueEnd, 2f, new Color(50, 50, 50, 255)); // Grip highlight
+
+                        // 5. Cue tip (blue chalk)
+                        Vector2 cueTipEnd = cueStart + (cueDir * 4f);
+                        Raylib.DrawLineEx(cueStart, cueTipEnd, 6f, new Color(100, 150, 255, 255));
                     }
                 }
+            }
             Raylib.EndMode2D();
 
             // Draw Statistics
@@ -272,14 +273,14 @@ namespace BilliardsGame.App
 
                 var p1 = _sceneData.Player1;
                 var p2 = _sceneData.Player2;
-                int p1Pocketed = 0; string p1Type = "None";
+                int p1Pocketed = 0; string? p1Type = "None";
                 if (p1?.AssignedType != null) {
                     p1Type = p1.AssignedType.ToString();
                     int rem = 0;
                     if (_sceneData.Bodies != null) { foreach(var b in _sceneData.Bodies) { if(b is ICircleBody cb && cb.BallType == p1.AssignedType) rem++; } }
                     p1Pocketed = 7 - rem;
                 }
-                int p2Pocketed = 0; string p2Type = "None";
+                int p2Pocketed = 0; string? p2Type = "None";
                 if (p2?.AssignedType != null) {
                     p2Type = p2.AssignedType.ToString();
                     int rem = 0;
@@ -478,3 +479,4 @@ namespace BilliardsGame.App
         }
     }
 }
+

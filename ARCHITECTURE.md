@@ -83,18 +83,18 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] **Entity Differentiation (Solid vs Striped):** `BallType` enums introduced mapped to complex rendering properties distinguishing base colors & stripped patterns. 
   - [x] **Complex Turn Logic (Basic):** Sinking an assigned type continues player turn. Unassigned table assignments dictating suites based on primary sink events.
 
-- **Phase 10: Advanced Adjudication Engine & Testing Framework [Next]**
-  - **A. Physics Snapshot Metadata Hooking:** The physics engine (`PhysicsEngine`) must track and output metadata exactly per stroke (`StrokeData` context block during `SimulatingBalls`):
+- **Phase 10: Advanced Adjudication Engine & Testing Framework [Completed]**
+  - [x] **A. Physics Snapshot Metadata Hooking:** The physics engine (`PhysicsEngine`) must track and output metadata exactly per stroke (`StrokeData` context block during `SimulatingBalls`):
     - `FirstBallHit`: Which specific ball Id the white ball collided with first.
     - `RailsHit`: How many rails were touched *after* the initial ball-to-ball contact.
     - `SunkBalls`: A chronological queue of pocketed ball Ids resolving simultaneous sinks.
-  - **B. Foul Validation System (IRulesEngine):** Decouple dirty rule checking out of `GameManager` creating a dedicated isolated `RuleValidator`. It evaluates stroke data against the table pool state to determine legal strokes:
+  - [x] **B. Foul Validation System (IRulesEngine):** Decouple dirty rule checking out of `GameManager` creating a dedicated isolated `RuleValidator`. It evaluates stroke data against the table pool state to determine legal strokes:
     - *Open Table Fault:* Hitting the 8-Ball primary when the table assignment is open.
     - *Wrong Tier Fault:* Hitting an opposing stripe/solid explicitly first.
     - *No Rail Fault:* Soft defensive taps preventing game flow (if nothing sunk, ball must eventually hit a rail after strike).
     - *Scratch & Sink Fault:* Sinking the white ball concurrently whilst sinking a correct object ball (should invalidate the continuation logic immediately).
-  - **C. Ball-in-Hand Interactive Placement:** Overwrite hardcoded white ball spawn mechanisms with an interactive state `GameState.BallInHand`. After a foul, the player can dynamically ghost-place the white ball with mouse cursor clicking anywhere on the board validated safe (`Vector2` overlaps via safe collision check).
-  - **D. Automated Theory Testing Framework (The "How-To-Test" Solution):** To prevent manual QA-attrition reproducing a billion billiard outcomes, `BilliardsGame.Core.Tests` MUST introduce data-driven xUnit `[Theory]` definitions parsing a robust set of edge case matrix states mimicking instantaneous shot outcomes. Mock the `PhysicsEngine.StrokeData` property to return rigged histories and enforce `RuleValidator` behaviors to assert Turn and Foul conditions rapidly.
+  - [x] **C. Ball-in-Hand Interactive Placement:** Overwrite hardcoded white ball spawn mechanisms with an interactive state `GameState.BallInHand`. After a foul, the player can dynamically ghost-place the white ball with mouse cursor clicking anywhere on the board validated safe (`Vector2` overlaps via safe collision check).
+  - [x] **D. Automated Theory Testing Framework (The "How-To-Test" Solution):** To prevent manual QA-attrition reproducing a billion billiard outcomes, `BilliardsGame.Core.Tests` MUST introduce data-driven xUnit `[Theory]` definitions parsing a robust set of edge case matrix states mimicking instantaneous shot outcomes. Mock the `PhysicsEngine.StrokeData` property to return rigged histories and enforce `RuleValidator` behaviors to assert Turn and Foul conditions rapidly.
 
 ---
 

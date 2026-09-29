@@ -1,4 +1,6 @@
 using BilliardsGame.Interfaces;
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +20,8 @@ namespace BilliardsGame.Physics
 
         private const int CollisionIterations = 2;
 
+        public StrokeData CurrentStrokeData { get; private set; }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PhysicsEngine"/> class.
         /// </summary>
@@ -29,6 +33,12 @@ namespace BilliardsGame.Physics
             _pockets = new List<IPocket>();
             _tableFriction = tableFriction;
             _sleepVelocityThreshold = sleepVelocityThreshold;
+            CurrentStrokeData = new StrokeData { SunkBallsIds = new List<int>() };
+        }
+
+        public void ResetStrokeData()
+        {
+            CurrentStrokeData = new StrokeData { SunkBallsIds = new List<int>() };
         }
 
         /// <inheritdoc />
@@ -135,6 +145,7 @@ namespace BilliardsGame.Physics
                     float distSq = (body.Position - pocket.Position).LengthSquared();
                     if (distSq < pocket.Radius * pocket.Radius)
                     {
+                        CurrentStrokeData.SunkBallsIds.Add(body.Id);
                         _bodies.RemoveAt(i);
                         break;
                     }
@@ -206,6 +217,29 @@ namespace BilliardsGame.Physics
 
                 bodyA.ApplyImpulse(impulse);
                 bodyB.ApplyImpulse(-impulse);
+                
+                // Track FirstBallHitId if not set, 0 = cue ball
+                if (CurrentStrokeData.FirstBallHitId == null)
+                {
+                    if (bodyA.Id == 0)
+                    {
+                        CurrentStrokeData = new StrokeData 
+                        { 
+                            FirstBallHitId = bodyB.Id, 
+                            RailsHitAfterContact = CurrentStrokeData.RailsHitAfterContact, 
+                            SunkBallsIds = CurrentStrokeData.SunkBallsIds 
+                        };
+                    }
+                    else if (bodyB.Id == 0)
+                    {
+                        CurrentStrokeData = new StrokeData 
+                        { 
+                            FirstBallHitId = bodyA.Id, 
+                            RailsHitAfterContact = CurrentStrokeData.RailsHitAfterContact, 
+                            SunkBallsIds = CurrentStrokeData.SunkBallsIds 
+                        };
+                    }
+                }
             }
         }
 
@@ -242,6 +276,16 @@ namespace BilliardsGame.Physics
                     
                     Vector2 impulse = j * n;
                     ball.ApplyImpulse(impulse);
+
+                    if (CurrentStrokeData.FirstBallHitId != null)
+                    {
+                        CurrentStrokeData = new StrokeData 
+                        { 
+                            FirstBallHitId = CurrentStrokeData.FirstBallHitId,
+                            RailsHitAfterContact = CurrentStrokeData.RailsHitAfterContact + 1,
+                            SunkBallsIds = CurrentStrokeData.SunkBallsIds
+                        };
+                    }
                 }
             }
         }

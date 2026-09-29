@@ -1,3 +1,4 @@
+using BilliardsGame.Interfaces.Enums;
 using System.Collections.Generic;
 
 namespace BilliardsGame.Interfaces

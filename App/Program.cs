@@ -1,3 +1,5 @@
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 using System;
 using System.Numerics;
 using System.Linq;
@@ -84,17 +86,17 @@ namespace BilliardsGame.App
                     {
                         float y = yStart + row * 2 * dy;
                         int number = numbers[idx++];
-                        BilliardsGame.Interfaces.BallType type;
-                        if (number == 8) type = BilliardsGame.Interfaces.BallType.Black;
-                        else if (number >= 1 && number <= 7) type = BilliardsGame.Interfaces.BallType.Solid;
-                        else type = BilliardsGame.Interfaces.BallType.Striped;
+                        BallType type;
+                        if (number == 8) type = BallType.Black;
+                        else if (number >= 1 && number <= 7) type = BallType.Solid;
+                        else type = BallType.Striped;
 
                         var ball = new Ball(number, new Vector2(x, y), 0.15f, r, 0.8f, type, number);
                         physicsEngine.AddBody(ball);
                     }
                 }
 
-                var whiteBall = new Ball(0, new Vector2(350, 400), 0.15f, r, 0.8f, BilliardsGame.Interfaces.BallType.Cue, 0);
+                var whiteBall = new Ball(0, new Vector2(350, 400), 0.15f, r, 0.8f, BallType.Cue, 0);
                 physicsEngine.AddBody(whiteBall);
             };
 
@@ -103,9 +105,10 @@ namespace BilliardsGame.App
             var inputProvider = new RaylibInputProvider();
             var cueController = new CueController();
             var gameManager = new GameManager(physicsEngine, cueController, inputProvider);
-            gameManager.OnScratchFoul += () => 
+
+            gameManager.OnPlaceCueBall += pos => 
             {
-                var whiteBall = new Ball(0, new Vector2(350, 400), 0.15f, 10f, 0.8f, BilliardsGame.Interfaces.BallType.Cue, 0);
+                var whiteBall = new Ball(0, pos, 0.15f, 10f, 0.8f, BallType.Cue, 0);
                 physicsEngine.AddBody(whiteBall);
             };
 
@@ -140,8 +143,8 @@ namespace BilliardsGame.App
             while (!Raylib.WindowShouldClose() && !shouldExit)
             {
                 inputProvider.Update();
-                if (gameManager.CurrentState != BilliardsGame.Interfaces.GameState.Menu && 
-                    gameManager.CurrentState != BilliardsGame.Interfaces.GameState.GameOver)
+                if (gameManager.CurrentState != GameState.Menu && 
+                    gameManager.CurrentState != GameState.GameOver)
                 {
                     if (Raylib.IsKeyPressed(KeyboardKey.Escape))
                     {

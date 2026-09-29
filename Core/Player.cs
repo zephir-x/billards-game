@@ -1,4 +1,6 @@
-﻿using BilliardsGame.Interfaces;
+using BilliardsGame.Interfaces;
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 
 namespace BilliardsGame.Core
 {

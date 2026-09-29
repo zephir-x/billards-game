@@ -1,14 +1,7 @@
+using BilliardsGame.Interfaces.Enums;
+
 namespace BilliardsGame.Interfaces
 {
-    public enum GameState 
-    { 
-        Menu, 
-        PlayerTurn, 
-        ChargingShot, 
-        SimulatingBalls, 
-        GameOver 
-    }
-
     public interface IGameManager
     {
         GameState CurrentState { get; }
@@ -22,5 +15,6 @@ namespace BilliardsGame.Interfaces
         void StartGame();
         void EndTurn();
         event System.Action OnScratchFoul;
+        event System.Action<System.Numerics.Vector2> OnPlaceCueBall;
     }
 }

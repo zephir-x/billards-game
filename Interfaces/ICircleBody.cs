@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+using BilliardsGame.Interfaces.Enums;
+using System.Numerics;
 
 namespace BilliardsGame.Interfaces
 {

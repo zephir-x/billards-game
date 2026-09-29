@@ -1,5 +1,7 @@
 using System.Numerics;
 using BilliardsGame.Interfaces;
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 using Raylib_cs;
 
 namespace BilliardsGame.App
