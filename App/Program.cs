@@ -18,30 +18,37 @@ namespace BilliardsGame.App
             
             var physicsEngine = new PhysicsEngine(1.2f, 8.0f);
 
-            var topCushion = new Cushion(10, new Vector2(100, 100), new Vector2(700, 100), 0.9f);
-            var rightCushion = new Cushion(11, new Vector2(700, 100), new Vector2(700, 500), 0.9f);
-            var bottomCushion = new Cushion(12, new Vector2(700, 500), new Vector2(100, 500), 0.9f);
-            var leftCushion = new Cushion(13, new Vector2(100, 500), new Vector2(100, 100), 0.9f);
-
-            physicsEngine.AddBody(topCushion);
-            physicsEngine.AddBody(rightCushion);
-            physicsEngine.AddBody(bottomCushion);
-            physicsEngine.AddBody(leftCushion);
-
-            var hole1 = new Hole(new Vector2(100, 100), 16f);
-            var hole2 = new Hole(new Vector2(400, 100), 16f);
-            var hole3 = new Hole(new Vector2(700, 100), 16f);
-            var hole4 = new Hole(new Vector2(100, 500), 16f);
-            var hole5 = new Hole(new Vector2(400, 500), 16f);
-            var hole6 = new Hole(new Vector2(700, 500), 16f);
-
-            physicsEngine.AddPocket(hole1);
-            physicsEngine.AddPocket(hole2);
-            physicsEngine.AddPocket(hole3);
-            physicsEngine.AddPocket(hole4);
-            physicsEngine.AddPocket(hole5);
-            physicsEngine.AddPocket(hole6);
             
+            // Table Main Cushions
+            physicsEngine.AddBody(new Cushion(10, new Vector2(130, 100), new Vector2(370, 100), 0.9f));
+            physicsEngine.AddBody(new Cushion(11, new Vector2(430, 100), new Vector2(670, 100), 0.9f));
+            physicsEngine.AddBody(new Cushion(12, new Vector2(700, 130), new Vector2(700, 470), 0.9f));
+            physicsEngine.AddBody(new Cushion(13, new Vector2(670, 500), new Vector2(430, 500), 0.9f));
+            physicsEngine.AddBody(new Cushion(14, new Vector2(370, 500), new Vector2(130, 500), 0.9f));
+            physicsEngine.AddBody(new Cushion(15, new Vector2(100, 470), new Vector2(100, 130), 0.9f));
+
+            // Table Corner and Middle Jaws (Pocket funnels)
+            physicsEngine.AddBody(new Cushion(20, new Vector2(100, 130), new Vector2(80, 110), 0.9f));
+            physicsEngine.AddBody(new Cushion(21, new Vector2(110, 80), new Vector2(130, 100), 0.9f));
+            physicsEngine.AddBody(new Cushion(22, new Vector2(370, 100), new Vector2(380, 75), 0.9f));
+            physicsEngine.AddBody(new Cushion(23, new Vector2(420, 75), new Vector2(430, 100), 0.9f));
+            physicsEngine.AddBody(new Cushion(24, new Vector2(670, 100), new Vector2(690, 80), 0.9f));
+            physicsEngine.AddBody(new Cushion(25, new Vector2(720, 110), new Vector2(700, 130), 0.9f));
+            physicsEngine.AddBody(new Cushion(26, new Vector2(700, 470), new Vector2(720, 490), 0.9f));
+            physicsEngine.AddBody(new Cushion(27, new Vector2(690, 520), new Vector2(670, 500), 0.9f));
+            physicsEngine.AddBody(new Cushion(28, new Vector2(430, 500), new Vector2(420, 525), 0.9f));
+            physicsEngine.AddBody(new Cushion(29, new Vector2(380, 525), new Vector2(370, 500), 0.9f));
+            physicsEngine.AddBody(new Cushion(30, new Vector2(130, 500), new Vector2(110, 520), 0.9f));
+            physicsEngine.AddBody(new Cushion(31, new Vector2(80, 490), new Vector2(100, 470), 0.9f));
+
+            // Pockets
+            physicsEngine.AddPocket(new Hole(new Vector2(90, 90), 24f));
+            physicsEngine.AddPocket(new Hole(new Vector2(400, 80), 24f));
+            physicsEngine.AddPocket(new Hole(new Vector2(710, 90), 24f));
+            physicsEngine.AddPocket(new Hole(new Vector2(90, 510), 24f));
+            physicsEngine.AddPocket(new Hole(new Vector2(400, 520), 24f));
+            physicsEngine.AddPocket(new Hole(new Vector2(710, 510), 24f));
+
             Action setupBalls = () => 
             {
                 var bodies = physicsEngine.GetBodies().ToList();
@@ -138,8 +145,3 @@ namespace BilliardsGame.App
         }
     }
 }
-
-
-
-
-

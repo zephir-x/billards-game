@@ -65,12 +65,27 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] Overheat mechanic: Modifying `CueController` so that hitting `Power > 1.0` blocks shooting and triggers a slow cooldown drain back to `0.0`.
   - [x] UI Power Bar: Render a dynamic Power Bar (filling up and changing color) completely outside the physical table boundaries.
 
-- **Phase 7: Win States, Logic Bugs & Menus [Next]**
+- **Phase 7: Win States, Logic Bugs & Menus [Completed]**
   - [x] **Urgent Bug Fixes - White Ball Sinking (Scratch/Foul):** Currently, sinking the white ball permanently despawns it, soft-locking the `GameManager` in `SimulatingBalls` or crashing aiming calculations. The engine must track the white ball state and respawn it upon turn end if sank (Foul penalty logic).
   - [x] **Urgent Bug Fixes - Black Ball Sinking (Win Condition):** Sinking the object ball (black ball) currently does nothing but despawn it. The Engine must broadcast a win event, ending the session and jumping the state to `GameOver`.
   - [x] Main Menu Flow: Add a starting splash screen capturing user input for `Play` or `Exit` buttons explicitly blocking game loop start.
   - [x] In-Game Menu overlay: Override `ESC` key handling (preventing the default Raylib abrupt application exit) to raise an in-game pause overlay screen with clickable buttons: `Continue`, `Restart`, and `Exit`.
   - [x] HUD Implementation: Build a Top-Center GUI mapping the current scores, balls left, and formatted `Turn: Player X` tag.
+
+- **Phase 8: Table UI Polish, Visual Feedback & Collision Hitboxes [Completed]**
+    - [x] **Hitbox/Visual Synchronization:** Recalibrate rendering alignment. Currently, visual thickness of cushions intersects actual collision lines by drawing outwards in both directions causing balls to "penetrate" the cushion lines. Render walls inwards from their collision lines segment or offset them correctly.
+    - [x] **Table Aesthetics:** Make cushions thicker and round off corners aesthetically. The space outside the table bounds will render a smooth blue-red gradient or a solid contrast tone. Make holes visually integrate into corners smoothly mirroring real billiards (with inwards indent contours). Expand pocket capture radius slightly favoring leniency.
+    - [x] **Ghost Guide (Aim Line):** Implement an ethereal dynamic aiming line shooting out of the cue ball indicating theoretical travel path when aiming.
+    - [x] **UI/HUD Overhaul:** Center the "Turn: " text accurately at the top of the canvas, between player boundaries. Build dedicated UI spaces assigning Player 1 layout on the top left and Player 2 layout on the top right visualizing collected/pocketed balls in the space preceding the general Power Bar.
+
+- **Phase 9: 8-Ball Game Mode & Tiers (Full Rack Setup) [Next]**
+  - **Instancing Full Rack:** In `Program.cs`, initialize 15 standard balls positioned identically to 8-Ball standard triangle pattern layouts at the front anchor constraint (opposite to cue ball resting sector).
+  - **Entity Differentiation (Solid vs Striped):** Create property/enum `BallType` defining solid (1-7), marked striped (9-15), black (8) and cue (0). Solid will be colored raw, while striped render with a central white dot or distinct band.
+  - **Complex Turn Logic (Basic):** Sinking an assigned type continues player turn. Sinking opposite type transitions turn. Sinking the black ball before claiming all pool types registers as an immediate self-KO failure.
+
+- **Phase 10: Adjudication Engine (Fouls & Micro-rules) [Pending]**
+  - **Penalty Evaluation Hooks:** Introduce rule checkers: Striking opponent's ball first without cue deflection, sinking both types of balls simultaneously.
+  - **Punishments:** Trigger "Ball in Hand" mechanics delegating placement of the white ball to the cursor upon opponent's foul instead of hardcoded coordinates.
 
 ---
 
@@ -233,3 +248,4 @@ $$R_{Pos} = (Pos_{previous} \cdot (1 - \alpha)) + (Pos_{current} \cdot \alpha)$$
 - **$Pos_{previous}$:** Physics state from the previous step.
 - **$Pos_{current}$:** The newly calculated physics state.
 - **$\alpha$:** The time fraction elapsed since the last physics step.
+
