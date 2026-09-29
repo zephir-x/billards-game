@@ -105,8 +105,7 @@ namespace BilliardsGame.App
             var inputProvider = new RaylibInputProvider();
             var cueController = new CueController();
             var gameManager = new GameManager(physicsEngine, cueController, inputProvider);
-
-            gameManager.OnPlaceCueBall += pos => 
+            gameManager.OnPlaceCueBall += (pos) => 
             {
                 var whiteBall = new Ball(0, pos, 0.15f, 10f, 0.8f, BallType.Cue, 0);
                 physicsEngine.AddBody(whiteBall);
@@ -115,6 +114,8 @@ namespace BilliardsGame.App
             var sceneData = new SceneParameters(gameManager, physicsEngine, cueController);
             var renderer = new RaylibRenderer();
             renderer.Initialize(sceneData);
+            
+            inputProvider.SetCoordinateMapper((screenPos) => Raylib.GetScreenToWorld2D(screenPos, renderer.MainCamera));
 
             bool isPaused = false;
             bool shouldExit = false;

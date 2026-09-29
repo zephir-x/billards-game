@@ -1,12 +1,12 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace BilliardsGame.Interfaces.Models
 {
-    public struct StrokeData
+    public class StrokeData
     {
         public int? FirstBallHitId { get; set; }
         public int RailsHitAfterContact { get; set; }
-        public List<int> SunkBallsIds { get; set; }
+        public List<int> SunkBallsIds { get; set; } = new List<int>();
 
         public void Reset()
         {

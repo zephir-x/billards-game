@@ -12,7 +12,7 @@ namespace BilliardsGame.App
         private ISceneParameters? _sceneData;
 
         public bool IsPaused { get; set; }
-        public static Camera2D MainCamera;
+        public Camera2D MainCamera { get; private set; }
         
         public Action? OnPlayClicked { get; set; }
         public Action? OnExitClicked { get; set; }
@@ -479,4 +479,3 @@ namespace BilliardsGame.App
         }
     }
 }
-
