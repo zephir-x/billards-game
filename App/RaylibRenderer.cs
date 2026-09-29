@@ -10,6 +10,7 @@ namespace BilliardsGame.App
         private ISceneParameters? _sceneData;
 
         public bool IsPaused { get; set; }
+        public static Camera2D MainCamera;
         
         public Action? OnPlayClicked { get; set; }
         public Action? OnExitClicked { get; set; }
@@ -20,6 +21,13 @@ namespace BilliardsGame.App
         public void Initialize(ISceneParameters sceneData)
         {
             _sceneData = sceneData;
+            MainCamera = new Camera2D
+            {
+                Target = new Vector2(500, 420),
+                Offset = new Vector2(1600 / 2f, 900 / 2f + 85),
+                Rotation = 0.0f,
+                Zoom = 1.35f
+            };
         }
 
         public void DrawFrame(float interpolationAlpha)
@@ -28,14 +36,16 @@ namespace BilliardsGame.App
             
             // Draw Environment Background
             Raylib.ClearBackground(new Color(5, 5, 20, 255));
-            Raylib.DrawRectangleGradientH(0, 0, 800, 600, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
+            Raylib.DrawRectangleGradientH(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
+
+            Raylib.BeginMode2D(MainCamera);
 
             // 1. Outer Dark Wood Base
-            Rectangle outerWood = new Rectangle(40, 40, 720, 520);
+            Rectangle outerWood = new Rectangle(140, 140, 720, 520);
             Raylib.DrawRectangleRounded(outerWood, 0.15f, 30, new Color(60, 30, 10, 255));
 
             // 2. Inner Green Cloth
-            Rectangle cloth = new Rectangle(80, 80, 640, 440);
+            Rectangle cloth = new Rectangle(180, 180, 640, 440);
             Raylib.DrawRectangleRounded(cloth, 0.05f, 10, new Color(20, 105, 50, 255));
 
             // 3. Custom polygons for table rails (V-cuts and 45-degree corner pockets)
@@ -66,50 +76,50 @@ namespace BilliardsGame.App
             };
 
             // Top Left Rail
-            var tl1 = new Vector2(110, 80);
-            var tl2 = new Vector2(130, 100);
-            var tl3 = new Vector2(370, 100);
-            var tl4 = new Vector2(380, 80);
+            var tl1 = new Vector2(210, 180);
+            var tl2 = new Vector2(230, 200);
+            var tl3 = new Vector2(470, 200);
+            var tl4 = new Vector2(480, 180);
             DrawQuad(tl1, tl2, tl3, tl4, railColor);
             DrawQuadLines(tl1, tl2, tl3, tl4, 3f, railBorder);
 
             // Top Right Rail
-            var tr1 = new Vector2(420, 80);
-            var tr2 = new Vector2(430, 100);
-            var tr3 = new Vector2(670, 100);
-            var tr4 = new Vector2(690, 80);
+            var tr1 = new Vector2(520, 180);
+            var tr2 = new Vector2(530, 200);
+            var tr3 = new Vector2(770, 200);
+            var tr4 = new Vector2(790, 180);
             DrawQuad(tr1, tr2, tr3, tr4, railColor);
             DrawQuadLines(tr1, tr2, tr3, tr4, 3f, railBorder);
 
             // Bottom Left Rail
-            var bl1 = new Vector2(130, 500); 
-            var bl2 = new Vector2(110, 520);
-            var bl3 = new Vector2(380, 520);
-            var bl4 = new Vector2(370, 500);
+            var bl1 = new Vector2(230, 600); 
+            var bl2 = new Vector2(210, 620);
+            var bl3 = new Vector2(480, 620);
+            var bl4 = new Vector2(470, 600);
             DrawQuad(bl1, bl2, bl3, bl4, railColor);
             DrawQuadLines(bl1, bl2, bl3, bl4, 3f, railBorder);
 
             // Bottom Right Rail
-            var br1 = new Vector2(430, 500);
-            var br2 = new Vector2(420, 520);
-            var br3 = new Vector2(690, 520);
-            var br4 = new Vector2(670, 500);
+            var br1 = new Vector2(530, 600);
+            var br2 = new Vector2(520, 620);
+            var br3 = new Vector2(790, 620);
+            var br4 = new Vector2(770, 600);
             DrawQuad(br1, br2, br3, br4, railColor);
             DrawQuadLines(br1, br2, br3, br4, 3f, railBorder);
 
             // Left Rail
-            var l1 = new Vector2(80, 110);
-            var l2 = new Vector2(80, 490);
-            var l3 = new Vector2(100, 470);
-            var l4 = new Vector2(100, 130);
+            var l1 = new Vector2(180, 210);
+            var l2 = new Vector2(180, 590);
+            var l3 = new Vector2(200, 570);
+            var l4 = new Vector2(200, 230);
             DrawQuad(l1, l2, l3, l4, railColor);
             DrawQuadLines(l1, l2, l3, l4, 3f, railBorder);
 
             // Right Rail
-            var r1 = new Vector2(700, 130);
-            var r2 = new Vector2(700, 470);
-            var r3 = new Vector2(720, 490);
-            var r4 = new Vector2(720, 110);
+            var r1 = new Vector2(800, 230);
+            var r2 = new Vector2(800, 570);
+            var r3 = new Vector2(820, 590);
+            var r4 = new Vector2(820, 210);
             DrawQuad(r1, r2, r3, r4, railColor);
             DrawQuadLines(r1, r2, r3, r4, 3f, railBorder);
 
@@ -134,8 +144,73 @@ namespace BilliardsGame.App
                     if (body is ICircleBody circleBody)
                     {
                         Vector2 renderedPos = (body.PreviousPosition * (1f - interpolationAlpha)) + (body.Position * interpolationAlpha);
-                        Color color = body.Id == 0 ? Color.White : Color.Black;
-                        Raylib.DrawCircleV(renderedPos, circleBody.Radius, color);
+                        
+                        Color ballColor = Color.White;
+                        int n = circleBody.Number;
+                        if (circleBody.BallType == BallType.Cue) 
+                        {
+                            ballColor = Color.White;
+                        }
+                        else if (circleBody.BallType == BallType.Black)
+                        {
+                            ballColor = new Color(20, 20, 20, 255);
+                        }
+                        else
+                        {
+                            int colorIndex = n > 8 ? n - 8 : n;
+                            ballColor = colorIndex switch 
+                            {
+                                1 => new Color(255, 215, 0, 255),  // Yellow
+                                2 => new Color(0, 0, 255, 255),    // Blue
+                                3 => new Color(255, 0, 0, 255),    // Red
+                                4 => new Color(128, 0, 128, 255),  // Purple
+                                5 => new Color(255, 140, 0, 255),  // Orange
+                                6 => new Color(0, 128, 0, 255),    // Green
+                                7 => new Color(128, 0, 0, 255),    // Burgundy
+                                _ => Color.White
+                            };
+                        }
+
+                        if (circleBody.BallType == BallType.Cue)
+                        {
+                            Raylib.DrawCircleV(renderedPos, circleBody.Radius, Color.RayWhite);
+                        }
+                        else if (circleBody.BallType == BallType.Solid || circleBody.BallType == BallType.Black)
+                        {
+                            // Solid & Black ball: Colored base, white center
+                            Raylib.DrawCircleV(renderedPos, circleBody.Radius, ballColor);
+                            Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, Color.RayWhite);
+                        }
+                        else if (circleBody.BallType == BallType.Striped)
+                        {
+                            // Striped ball: White base, colored thick striped line bounded by circle
+                            Raylib.DrawCircleV(renderedPos, circleBody.Radius, Color.RayWhite);
+                            
+                            float stripeHalf = circleBody.Radius * 0.65f;
+                            for (float dy = -stripeHalf; dy <= stripeHalf; dy += 0.5f)
+                            {
+                                float chordX = MathF.Sqrt(circleBody.Radius * circleBody.Radius - dy * dy);
+                                Raylib.DrawLineV(
+                                    new Vector2(renderedPos.X - chordX, renderedPos.Y + dy),
+                                    new Vector2(renderedPos.X + chordX, renderedPos.Y + dy),
+                                    ballColor);
+                            }
+                            
+                            // White center
+                            Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, Color.RayWhite);
+                        }
+                        
+                        if (circleBody.BallType != BallType.Cue)
+                        {
+                            string numStr = n.ToString();
+                            Font font = Raylib.GetFontDefault();
+                            float fontSize = 9f;
+                            float spacing = 1.0f;
+                            Vector2 textSize = Raylib.MeasureTextEx(font, numStr, fontSize, spacing);
+                            Vector2 textPos = new Vector2(renderedPos.X - textSize.X / 2f, renderedPos.Y - (textSize.Y / 2f) + 1.0f);
+                            
+                            Raylib.DrawTextEx(font, numStr, textPos, fontSize, spacing, Color.Black);
+                        }
                     }
                 }
             }
@@ -186,54 +261,78 @@ namespace BilliardsGame.App
                         }
                     }
                 }
+            Raylib.EndMode2D();
+
             // Draw Statistics
             if (_sceneData != null && _sceneData.CurrentState != GameState.Menu && _sceneData.CurrentState != GameState.GameOver)
             {
-                string turnText = _sceneData.CurrentTurnPlayer != null 
-                    ? "Turn: " + _sceneData.CurrentTurnPlayer.Name
-                    : "Turn: None";
-                
-                int turnTextWidth = Raylib.MeasureText(turnText, 24);
-                Raylib.DrawText(turnText, 400 - turnTextWidth / 2, 10, 24, Color.RayWhite);
+                string turnText = _sceneData.CurrentTurnPlayer != null  ? "Turn: " + _sceneData.CurrentTurnPlayer.Name : "Turn: None";
+                int turnTextWidth = Raylib.MeasureText(turnText, 36); 
+                Raylib.DrawText(turnText, 1600 / 2 - turnTextWidth / 2, 20, 36, Color.RayWhite);
 
-                // Player 1 Box (Top Left)
-                Raylib.DrawRectangle(10, 10, 160, 60, new Color(30, 30, 30, 200));
-                if (_sceneData.CurrentTurnPlayer?.Id == 1)
-                    Raylib.DrawRectangleLines(10, 10, 160, 60, Color.Orange);
-                else
-                    Raylib.DrawRectangleLines(10, 10, 160, 60, Color.DarkGray);
+                var p1 = _sceneData.Player1;
+                var p2 = _sceneData.Player2;
+                int p1Pocketed = 0; string p1Type = "None";
+                if (p1?.AssignedType != null) {
+                    p1Type = p1.AssignedType.ToString();
+                    int rem = 0;
+                    if (_sceneData.Bodies != null) { foreach(var b in _sceneData.Bodies) { if(b is ICircleBody cb && cb.BallType == p1.AssignedType) rem++; } }
+                    p1Pocketed = 7 - rem;
+                }
+                int p2Pocketed = 0; string p2Type = "None";
+                if (p2?.AssignedType != null) {
+                    p2Type = p2.AssignedType.ToString();
+                    int rem = 0;
+                    if (_sceneData.Bodies != null) { foreach(var b in _sceneData.Bodies) { if(b is ICircleBody cb && cb.BallType == p2.AssignedType) rem++; } }
+                    p2Pocketed = 7 - rem;
+                }
+
+                int boxW = 280;
+                int boxH = 130;
+                int pad = 20;
+                int p1X = pad; int p1Y = pad;
+                int p2X = 1600 - boxW - pad; int p2Y = pad;
+                int titleSize = 28;
+                int valSize = 22;
+
+                // Player 1 Box
+                Raylib.DrawRectangle(p1X, p1Y, boxW, boxH, new Color(30, 30, 30, 200));
+                if (_sceneData.CurrentTurnPlayer?.Id == 1) Raylib.DrawRectangleLines(p1X, p1Y, boxW, boxH, Color.Orange);
+                else Raylib.DrawRectangleLines(p1X, p1Y, boxW, boxH, Color.DarkGray);
                 
-                Raylib.DrawText("Player 1", 20, 15, 20, Color.RayWhite);
-                Raylib.DrawText("Balls Pocketed: 0", 20, 45, 14, Color.LightGray);
-                
-                // Player 2 Box (Top Right)
-                int p2BoxX = 800 - 170;
-                Raylib.DrawRectangle(p2BoxX, 10, 160, 60, new Color(30, 30, 30, 200));
-                if (_sceneData.CurrentTurnPlayer?.Id == 2)
-                    Raylib.DrawRectangleLines(p2BoxX, 10, 160, 60, Color.Orange);
-                else
-                    Raylib.DrawRectangleLines(p2BoxX, 10, 160, 60, Color.DarkGray);
-                
-                Raylib.DrawText("Player 2", p2BoxX + 10, 15, 20, Color.RayWhite);
-                Raylib.DrawText("Balls Pocketed: 0", p2BoxX + 10, 45, 14, Color.LightGray);
+                string txtP1 = "Player 1";
+                string txtP1Type = $"Type: {p1Type}";
+                string txtP1Pock = $"Pocketed: {p1Pocketed}/7";
+
+                Raylib.DrawText(txtP1, p1X + boxW/2 - Raylib.MeasureText(txtP1, titleSize)/2, p1Y + 15, titleSize, Color.RayWhite);
+                Raylib.DrawText(txtP1Type, p1X + boxW/2 - Raylib.MeasureText(txtP1Type, valSize)/2, p1Y + 55, valSize, Color.LightGray);
+                Raylib.DrawText(txtP1Pock, p1X + boxW/2 - Raylib.MeasureText(txtP1Pock, valSize)/2, p1Y + 90, valSize, Color.LightGray);
+
+                // Player 2 Box
+                Raylib.DrawRectangle(p2X, p2Y, boxW, boxH, new Color(30, 30, 30, 200));
+                if (_sceneData.CurrentTurnPlayer?.Id == 2) Raylib.DrawRectangleLines(p2X, p2Y, boxW, boxH, Color.Orange);
+                else Raylib.DrawRectangleLines(p2X, p2Y, boxW, boxH, Color.DarkGray);
+
+                string txtP2 = "Player 2";
+                string txtP2Type = $"Type: {p2Type}";
+                string txtP2Pock = $"Pocketed: {p2Pocketed}/7";
+
+                Raylib.DrawText(txtP2, p2X + boxW/2 - Raylib.MeasureText(txtP2, titleSize)/2, p2Y + 15, titleSize, Color.RayWhite);
+                Raylib.DrawText(txtP2Type, p2X + boxW/2 - Raylib.MeasureText(txtP2Type, valSize)/2, p2Y + 55, valSize, Color.LightGray);
+                Raylib.DrawText(txtP2Pock, p2X + boxW/2 - Raylib.MeasureText(txtP2Pock, valSize)/2, p2Y + 90, valSize, Color.LightGray);
 
                 // PowerBar UI
                 if (_sceneData.CueInfo != null)
                 {
-                    int barWidth = 300;
-                    int barHeight = 15;
-                    int barX = 400 - barWidth / 2;
-                    int barY = 45;
+                    int barWidth = 600;
+                    int barHeight = 24;
+                    int barX = 1600/2 - barWidth / 2;
+                    int barY = 70;
 
                     Raylib.DrawRectangle(barX, barY, barWidth, barHeight, Color.DarkGray);
-                    
                     int fillWidth = (int)(barWidth * _sceneData.CueInfo.Power);
                     Color fillColor = _sceneData.CueInfo.IsOverheated ? Color.Orange : new Color(100, 150, 200, 255);
-                    
-                    if (fillWidth > 0)
-                    {
-                        Raylib.DrawRectangle(barX, barY, fillWidth, barHeight, fillColor);
-                    }
+                    if (fillWidth > 0) Raylib.DrawRectangle(barX, barY, fillWidth, barHeight, fillColor);
                     Raylib.DrawRectangleLines(barX, barY, barWidth, barHeight, Color.LightGray);
                 }
             }
@@ -259,12 +358,19 @@ namespace BilliardsGame.App
         
         private void DrawMainMenu()
         {
-            Raylib.DrawRectangle(0, 0, 800, 600, new Color(0, 0, 0, 150));
+            int screenW = 1600; int screenH = 900;
+            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, 150));
             Vector2 mousePos = Raylib.GetMousePosition();
             bool isClick = Raylib.IsMouseButtonPressed(MouseButton.Left);
 
-            Rectangle playRect = new Rectangle(200, 250, 150, 80);
-            Rectangle exitRect = new Rectangle(450, 250, 150, 80);
+            int btnWidth = 150; int btnHeight = 80;
+            int gap = 50;
+            int totalWidth = btnWidth * 2 + gap;
+            int startX = (screenW - totalWidth) / 2;
+            int startY = screenH / 2 - btnHeight / 2 + 50;
+
+            Rectangle playRect = new Rectangle(startX, startY, btnWidth, btnHeight);
+            Rectangle exitRect = new Rectangle(startX + btnWidth + gap, startY, btnWidth, btnHeight);
 
             bool playHover = Raylib.CheckCollisionPointRec(mousePos, playRect);
             bool exitHover = Raylib.CheckCollisionPointRec(mousePos, exitRect);
@@ -275,10 +381,10 @@ namespace BilliardsGame.App
             int playTextWidth = Raylib.MeasureText("Play", 30);
             int exitTextWidth = Raylib.MeasureText("Exit", 30);
             
-            Raylib.DrawText("Play", 200 + 75 - playTextWidth/2, 250 + 25, 30, Color.RayWhite);
-            Raylib.DrawText("Exit", 450 + 75 - exitTextWidth/2, 250 + 25, 30, Color.RayWhite);
+            Raylib.DrawText("Play", startX + btnWidth/2 - playTextWidth/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
+            Raylib.DrawText("Exit", (startX + btnWidth + gap) + btnWidth/2 - exitTextWidth/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
             
-            Raylib.DrawText("MAIN MENU", 400 - Raylib.MeasureText("MAIN MENU", 40)/2, 120, 40, Color.RayWhite);
+            Raylib.DrawText("MAIN MENU", screenW/2 - Raylib.MeasureText("MAIN MENU", 50)/2, screenH/3 - 50, 50, Color.RayWhite);
 
             if (playHover && isClick) OnPlayClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();
@@ -286,13 +392,18 @@ namespace BilliardsGame.App
 
         private void DrawPauseMenu()
         {
-            Raylib.DrawRectangle(0, 0, 800, 600, new Color(0, 0, 0, 150));
+            int screenW = 1600; int screenH = 900;
+            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, 150));
             Vector2 mousePos = Raylib.GetMousePosition();
             bool isClick = Raylib.IsMouseButtonPressed(MouseButton.Left);
 
-            Rectangle continueRect = new Rectangle(300, 200, 200, 60);
-            Rectangle restartRect = new Rectangle(300, 280, 200, 60);
-            Rectangle exitRect = new Rectangle(300, 360, 200, 60);
+            int btnWidth = 200; int btnHeight = 60; int gap = 20;
+            int startX = screenW / 2 - btnWidth / 2;
+            int startY = screenH / 2 - (btnHeight * 3 + gap * 2) / 2 + 50;
+
+            Rectangle continueRect = new Rectangle(startX, startY, btnWidth, btnHeight);
+            Rectangle restartRect = new Rectangle(startX, startY + btnHeight + gap, btnWidth, btnHeight);
+            Rectangle exitRect = new Rectangle(startX, startY + (btnHeight + gap) * 2, btnWidth, btnHeight);
 
             bool continueHover = Raylib.CheckCollisionPointRec(mousePos, continueRect);
             bool restartHover = Raylib.CheckCollisionPointRec(mousePos, restartRect);
@@ -306,11 +417,11 @@ namespace BilliardsGame.App
             int restartTextWidth = Raylib.MeasureText("Restart", 30);
             int exitTextWidth = Raylib.MeasureText("Exit", 30);
 
-            Raylib.DrawText("Continue", 300 + 100 - continueTextWidth/2, 200 + 15, 30, Color.RayWhite);
-            Raylib.DrawText("Restart", 300 + 100 - restartTextWidth/2, 280 + 15, 30, Color.RayWhite);
-            Raylib.DrawText("Exit", 300 + 100 - exitTextWidth/2, 360 + 15, 30, Color.RayWhite);
+            Raylib.DrawText("Continue", startX + btnWidth/2 - continueTextWidth/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
+            Raylib.DrawText("Restart", startX + btnWidth/2 - restartTextWidth/2, startY + btnHeight + gap + btnHeight/2 - 15, 30, Color.RayWhite);
+            Raylib.DrawText("Exit", startX + btnWidth/2 - exitTextWidth/2, startY + (btnHeight + gap)*2 + btnHeight/2 - 15, 30, Color.RayWhite);
             
-            Raylib.DrawText("PAUSED", 400 - Raylib.MeasureText("PAUSED", 40)/2, 100, 40, Color.RayWhite);
+            Raylib.DrawText("PAUSED", screenW/2 - Raylib.MeasureText("PAUSED", 50)/2, screenH/3 - 50, 50, Color.RayWhite);
 
             if (continueHover && isClick) OnContinueClicked?.Invoke();
             if (restartHover && isClick) OnRestartClicked?.Invoke();
@@ -319,20 +430,25 @@ namespace BilliardsGame.App
         
         private void DrawGameOverMenu()
         {
-            Raylib.DrawRectangle(0, 0, 800, 600, new Color(0, 0, 0, 180));
-            Raylib.DrawText("GAME OVER", 400 - Raylib.MeasureText("GAME OVER", 50)/2, 150, 50, Color.Red);
+            int screenW = 1600; int screenH = 900;
+            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, 180));
+            Raylib.DrawText("GAME OVER", screenW/2 - Raylib.MeasureText("GAME OVER", 60)/2, screenH/3 - 60, 60, Color.Red);
             
             if (_sceneData?.Winner != null)
             {
                 string winnerText = "Winner: " + _sceneData.Winner.Name;
-                Raylib.DrawText(winnerText, 400 - Raylib.MeasureText(winnerText, 40)/2, 230, 40, Color.Gold);
+                Raylib.DrawText(winnerText, screenW/2 - Raylib.MeasureText(winnerText, 40)/2, screenH/3 + 20, 40, Color.Gold);
             }
             
             Vector2 mousePos = Raylib.GetMousePosition();
             bool isClick = Raylib.IsMouseButtonPressed(MouseButton.Left);
 
-            Rectangle restartRect = new Rectangle(300, 320, 200, 60);
-            Rectangle exitRect = new Rectangle(300, 400, 200, 60);
+            int btnWidth = 200; int btnHeight = 60; int gap = 20;
+            int startX = screenW / 2 - btnWidth / 2;
+            int startY = screenH / 2 + 50;
+
+            Rectangle restartRect = new Rectangle(startX, startY, btnWidth, btnHeight);
+            Rectangle exitRect = new Rectangle(startX, startY + btnHeight + gap, btnWidth, btnHeight);
 
             bool restartHover = Raylib.CheckCollisionPointRec(mousePos, restartRect);
             bool exitHover = Raylib.CheckCollisionPointRec(mousePos, exitRect);
@@ -343,8 +459,8 @@ namespace BilliardsGame.App
             int restartTextWidth = Raylib.MeasureText("Restart", 30);
             int exitTextWidth = Raylib.MeasureText("Exit", 30);
 
-            Raylib.DrawText("Restart", 300 + 100 - restartTextWidth/2, 320 + 15, 30, Color.RayWhite);
-            Raylib.DrawText("Exit", 300 + 100 - exitTextWidth/2, 400 + 15, 30, Color.RayWhite);
+            Raylib.DrawText("Restart", startX + btnWidth/2 - restartTextWidth/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
+            Raylib.DrawText("Exit", startX + btnWidth/2 - exitTextWidth/2, startY + btnHeight + gap + btnHeight/2 - 15, 30, Color.RayWhite);
             
             if (restartHover && isClick) OnRestartClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();

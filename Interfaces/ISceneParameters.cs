@@ -5,10 +5,13 @@ namespace BilliardsGame.Interfaces
     public interface ISceneParameters
     {
         GameState CurrentState { get; }
-        IPlayer CurrentTurnPlayer { get; }
+        IPlayer? CurrentTurnPlayer { get; }
         IPlayer? Winner { get; }
-        IReadOnlyCollection<IPhysicsBody> Bodies { get; }
-        IReadOnlyCollection<IPocket> Pockets { get; }
-        ICueController CueInfo { get; }
+        IReadOnlyCollection<IPhysicsBody>? Bodies { get; }
+        IReadOnlyCollection<IPocket>? Pockets { get; }
+        ICueController? CueInfo { get; }
+
+        IPlayer Player1 { get; }
+        IPlayer Player2 { get; }
     }
 }

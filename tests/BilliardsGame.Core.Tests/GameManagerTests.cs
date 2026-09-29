@@ -19,8 +19,8 @@ namespace BilliardsGame.Core.Tests
             var inputMock = new Mock<IInputProvider>();
             
             // Setup with ONLY black ball (simulate cue ball fell in pocket)
-            var blackBallMock = new Mock<IPhysicsBody>();
-            blackBallMock.SetupGet(b => b.Id).Returns(1);
+            var blackBallMock = new Mock<ICircleBody>();
+            blackBallMock.SetupGet(b => b.Id).Returns(8);
             
             physicsMock.Setup(p => p.GetBodies()).Returns(new List<IPhysicsBody> { blackBallMock.Object });
             physicsMock.Setup(p => p.AreAllBodiesAtRest(It.IsAny<float>())).Returns(true);
@@ -34,12 +34,12 @@ namespace BilliardsGame.Core.Tests
             gameManager.StartGame();
             inputMock.SetupGet(i => i.WasLeftMouseReleased).Returns(true);
             
-            var cueBallMock = new Mock<IPhysicsBody>();
+            var cueBallMock = new Mock<ICircleBody>();
             cueBallMock.SetupGet(b => b.Id).Returns(0);
             physicsMock.SetupSequence(p => p.GetBodies())
                 .Returns(new List<IPhysicsBody> { cueBallMock.Object, blackBallMock.Object }) // For initial GetCueBall
                 .Returns(new List<IPhysicsBody> { cueBallMock.Object, blackBallMock.Object }) // For ChargingShot
-                .Returns(new List<IPhysicsBody> { blackBallMock.Object });                    // For SimulatingBalls (missing cue ball)
+                .Returns(new List<IPhysicsBody> { cueBallMock.Object, blackBallMock.Object }).Returns(new List<IPhysicsBody> { blackBallMock.Object }).Returns(new List<IPhysicsBody> { blackBallMock.Object }).Returns(new List<IPhysicsBody> { blackBallMock.Object }).Returns(new List<IPhysicsBody> { blackBallMock.Object });
 
             inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(true);
             gameManager.UpdateLogic(0.016f); // To ChargingShot
@@ -63,7 +63,7 @@ namespace BilliardsGame.Core.Tests
             var inputMock = new Mock<IInputProvider>();
             
             // Setup with ONLY white ball (simulate black ball fell in pocket)
-            var cueBallMock = new Mock<IPhysicsBody>();
+            var cueBallMock = new Mock<ICircleBody>();
             cueBallMock.SetupGet(b => b.Id).Returns(0);
             
             physicsMock.Setup(p => p.GetBodies()).Returns(new List<IPhysicsBody> { cueBallMock.Object });

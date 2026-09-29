@@ -73,19 +73,28 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] HUD Implementation: Build a Top-Center GUI mapping the current scores, balls left, and formatted `Turn: Player X` tag.
 
 - **Phase 8: Table UI Polish, Visual Feedback & Collision Hitboxes [Completed]**
-    - [x] **Hitbox/Visual Synchronization:** Recalibrate rendering alignment. Currently, visual thickness of cushions intersects actual collision lines by drawing outwards in both directions causing balls to "penetrate" the cushion lines. Render walls inwards from their collision lines segment or offset them correctly.
-    - [x] **Table Aesthetics:** Make cushions thicker and round off corners aesthetically. The space outside the table bounds will render a smooth blue-red gradient or a solid contrast tone. Make holes visually integrate into corners smoothly mirroring real billiards (with inwards indent contours). Expand pocket capture radius slightly favoring leniency.
-    - [x] **Ghost Guide (Aim Line):** Implement an ethereal dynamic aiming line shooting out of the cue ball indicating theoretical travel path when aiming.
-    - [x] **UI/HUD Overhaul:** Center the "Turn: " text accurately at the top of the canvas, between player boundaries. Build dedicated UI spaces assigning Player 1 layout on the top left and Player 2 layout on the top right visualizing collected/pocketed balls in the space preceding the general Power Bar.
+  - [x] **Hitbox/Visual Synchronization:** Recalibrated rendering alignment explicitly using custom quad geometry mapping over 16 independent jaw buffers preventing physics tunneling while mimicking accurate pool boundaries.
+  - [x] **Table Aesthetics:** Thickened rails, inner bevels, custom cutouts per pocket.
+  - [x] **Ghost Guide (Aim Line):** Ethereal dashed rendering for cue prediction modeling vectors against physics overlaps.
+  - [x] **UI/HUD Overhaul:** Segmented dedicated scoring zones (Player 1 left, Player 2 right) explicitly awaiting Phase 9 Ball entities.
 
-- **Phase 9: 8-Ball Game Mode & Tiers (Full Rack Setup) [Next]**
-  - **Instancing Full Rack:** In `Program.cs`, initialize 15 standard balls positioned identically to 8-Ball standard triangle pattern layouts at the front anchor constraint (opposite to cue ball resting sector).
-  - **Entity Differentiation (Solid vs Striped):** Create property/enum `BallType` defining solid (1-7), marked striped (9-15), black (8) and cue (0). Solid will be colored raw, while striped render with a central white dot or distinct band.
-  - **Complex Turn Logic (Basic):** Sinking an assigned type continues player turn. Sinking opposite type transitions turn. Sinking the black ball before claiming all pool types registers as an immediate self-KO failure.
+- **Phase 9: 8-Ball Game Mode & Tiers (Full Rack Setup) [Completed]**
+  - [x] **Instancing Full Rack:** Foot spot algorithmic deployment covering true-to-life 8-Ball structure generation overlapping arrays preventing zero-lapses.
+  - [x] **Entity Differentiation (Solid vs Striped):** `BallType` enums introduced mapped to complex rendering properties distinguishing base colors & stripped patterns. 
+  - [x] **Complex Turn Logic (Basic):** Sinking an assigned type continues player turn. Unassigned table assignments dictating suites based on primary sink events.
 
-- **Phase 10: Adjudication Engine (Fouls & Micro-rules) [Pending]**
-  - **Penalty Evaluation Hooks:** Introduce rule checkers: Striking opponent's ball first without cue deflection, sinking both types of balls simultaneously.
-  - **Punishments:** Trigger "Ball in Hand" mechanics delegating placement of the white ball to the cursor upon opponent's foul instead of hardcoded coordinates.
+- **Phase 10: Advanced Adjudication Engine & Testing Framework [Next]**
+  - **A. Physics Snapshot Metadata Hooking:** The physics engine (`PhysicsEngine`) must track and output metadata exactly per stroke (`StrokeData` context block during `SimulatingBalls`):
+    - `FirstBallHit`: Which specific ball Id the white ball collided with first.
+    - `RailsHit`: How many rails were touched *after* the initial ball-to-ball contact.
+    - `SunkBalls`: A chronological queue of pocketed ball Ids resolving simultaneous sinks.
+  - **B. Foul Validation System (IRulesEngine):** Decouple dirty rule checking out of `GameManager` creating a dedicated isolated `RuleValidator`. It evaluates stroke data against the table pool state to determine legal strokes:
+    - *Open Table Fault:* Hitting the 8-Ball primary when the table assignment is open.
+    - *Wrong Tier Fault:* Hitting an opposing stripe/solid explicitly first.
+    - *No Rail Fault:* Soft defensive taps preventing game flow (if nothing sunk, ball must eventually hit a rail after strike).
+    - *Scratch & Sink Fault:* Sinking the white ball concurrently whilst sinking a correct object ball (should invalidate the continuation logic immediately).
+  - **C. Ball-in-Hand Interactive Placement:** Overwrite hardcoded white ball spawn mechanisms with an interactive state `GameState.BallInHand`. After a foul, the player can dynamically ghost-place the white ball with mouse cursor clicking anywhere on the board validated safe (`Vector2` overlaps via safe collision check).
+  - **D. Automated Theory Testing Framework (The "How-To-Test" Solution):** To prevent manual QA-attrition reproducing a billion billiard outcomes, `BilliardsGame.Core.Tests` MUST introduce data-driven xUnit `[Theory]` definitions parsing a robust set of edge case matrix states mimicking instantaneous shot outcomes. Mock the `PhysicsEngine.StrokeData` property to return rigged histories and enforce `RuleValidator` behaviors to assert Turn and Foul conditions rapidly.
 
 ---
 
@@ -248,4 +257,3 @@ $$R_{Pos} = (Pos_{previous} \cdot (1 - \alpha)) + (Pos_{current} \cdot \alpha)$$
 - **$Pos_{previous}$:** Physics state from the previous step.
 - **$Pos_{current}$:** The newly calculated physics state.
 - **$\alpha$:** The time fraction elapsed since the last physics step.
-

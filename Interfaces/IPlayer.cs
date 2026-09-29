@@ -4,5 +4,6 @@
     {
         int Id { get; }
         string Name { get; }
+        BallType? AssignedType { get; set; }
     }
 }

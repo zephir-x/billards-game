@@ -11,5 +11,15 @@ namespace BilliardsGame.Interfaces
         /// Radius of the circular body.
         /// </summary>
         float Radius { get; }
+        
+        /// <summary>
+        /// Type of the ball.
+        /// </summary>
+        BallType BallType { get; }
+        
+        /// <summary>
+        /// Optional Number of the ball (0-15).
+        /// </summary>
+        int Number { get; }
     }
 }

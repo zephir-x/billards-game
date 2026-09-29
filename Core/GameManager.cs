@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using BilliardsGame.Interfaces;
@@ -10,6 +11,10 @@ namespace BilliardsGame.Core
         public GameState CurrentState { get; private set; }
         public IPlayer ActivePlayer { get; private set; }
         public IPlayer? Winner { get; private set; }
+        
+        public IPlayer Player1 => _player1;
+        public IPlayer Player2 => _player2;
+
         public event Action? OnScratchFoul;
 
         private readonly IPhysicsEngine _physicsEngine;
@@ -18,6 +23,8 @@ namespace BilliardsGame.Core
 
         private readonly IPlayer _player1;
         private readonly IPlayer _player2;
+
+        private List<ICircleBody> _ballsAtStartOfTurn = new List<ICircleBody>();
 
         public GameManager(
             IPhysicsEngine physicsEngine,
@@ -37,6 +44,8 @@ namespace BilliardsGame.Core
 
         public void StartGame()
         {
+            _player1.AssignedType = null;
+            _player2.AssignedType = null;
             CurrentState = GameState.PlayerTurn;
             ActivePlayer = _player1;
             Winner = null;
@@ -53,7 +62,6 @@ namespace BilliardsGame.Core
             switch (CurrentState)
             {
                 case GameState.Menu:
-                    // Waiting for StartGame() to be called from the outside
                     break;
 
                 case GameState.PlayerTurn:
@@ -94,6 +102,13 @@ namespace BilliardsGame.Core
                             {
                                 _cueController.ExecuteShot(cueBall);
                             }
+                            
+                            // Snapshot balls before simulation
+                            var prev_bodies = _physicsEngine.GetBodies();
+                            _ballsAtStartOfTurn = (prev_bodies != null ? prev_bodies : Array.Empty<IPhysicsBody>())
+                                .OfType<ICircleBody>()
+                                .ToList();
+
                             CurrentState = GameState.SimulatingBalls;
                         }
                     }
@@ -111,23 +126,90 @@ namespace BilliardsGame.Core
                 {
                     if (_physicsEngine.AreAllBodiesAtRest())
                     {
-                        var bodies = _physicsEngine.GetBodies() ?? Array.Empty<IPhysicsBody>();
-                        bool hasWhite = bodies.Any(b => b.Id == 0);
-                        bool hasBlack = bodies.Any(b => b.Id == 1);
+                        var current_bodies = _physicsEngine.GetBodies();
+                        var currentBodies = (current_bodies != null ? current_bodies : Array.Empty<IPhysicsBody>()).OfType<ICircleBody>().ToList();
+                        
+                        bool hasWhite = currentBodies.Any(b => b.Id == 0);
+                        bool hasBlack = currentBodies.Any(b => b.Id == 8); // Black ball ID is 8
 
-                        if (!hasBlack)
+                        var pocketedBalls = _ballsAtStartOfTurn
+                            .Where(b => !currentBodies.Any(cb => cb.Id == b.Id))
+                            .ToList();
+
+                        bool scratch = !hasWhite;
+                        bool blackPocketed = !hasBlack;
+
+                        bool continueTurn = false;
+                        
+                        this.Winner = null; // assure reset
+
+                        // Rule: First pocketed after break assigns color (if not white or black)
+                        if (!scratch && 
+                            _player1.AssignedType == null && 
+                            pocketedBalls.Any(b => b.BallType == BallType.Solid || b.BallType == BallType.Striped))
                         {
-                            Winner = ActivePlayer;
+                            var first = pocketedBalls.First(b => b.BallType == BallType.Solid || b.BallType == BallType.Striped);
+                            ActivePlayer.AssignedType = first.BallType;
+                            IPlayer opponent = ActivePlayer == _player1 ? _player2 : _player1;
+                            opponent.AssignedType = first.BallType == BallType.Solid ? BallType.Striped : BallType.Solid;
+                        }
+
+                        if (blackPocketed)
+                        {
+                            // Did the current player pocket all their balls?
+                            if (ActivePlayer.AssignedType != null)
+                            {
+                                int ownBallsRemaining = currentBodies.Count(b => b.BallType == ActivePlayer.AssignedType);
+                                if (ownBallsRemaining == 0)
+                                {
+                                    Winner = ActivePlayer; // Success!
+                                }
+                                else
+                                {
+                                    Winner = ActivePlayer == _player1 ? _player2 : _player1; // Failure
+                                }
+                            }
+                            else
+                            {
+                                // Black pocketed before assigning types = instant lose
+                                Winner = ActivePlayer == _player1 ? _player2 : _player1;
+                            }
                             CurrentState = GameState.GameOver;
                             break;
                         }
 
-                        if (!hasWhite)
+                        if (scratch)
                         {
                             OnScratchFoul?.Invoke();
+                            EndTurn();
+                            break; // Scratch means turn over
                         }
 
-                        EndTurn();
+                        // Check if pocketed own ball
+                        if (ActivePlayer.AssignedType != null)
+                        {
+                            bool pocketedOpponentBall = pocketedBalls.Any(b => b.BallType != ActivePlayer.AssignedType && b.BallType != BallType.Cue && b.BallType != BallType.Black);
+                            bool pocketedOwnBall = pocketedBalls.Any(b => b.BallType == ActivePlayer.AssignedType);
+                            
+                            if (pocketedOpponentBall)
+                            {
+                                continueTurn = false;
+                            }
+                            else if (pocketedOwnBall)
+                            {
+                                continueTurn = true;
+                            }
+                        }
+
+                        if (continueTurn)
+                        {
+                            // "Continue Turn"
+                            CurrentState = GameState.PlayerTurn;
+                        }
+                        else
+                        {
+                            EndTurn();
+                        }
                     }
                     break;
                 }

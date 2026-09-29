@@ -6,6 +6,7 @@ namespace BilliardsGame.Core
     {
         public int Id { get; }
         public string Name { get; }
+        public BallType? AssignedType { get; set; }
 
         public Player(int id, string name)
         {

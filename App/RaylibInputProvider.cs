@@ -8,7 +8,7 @@ namespace BilliardsGame.App
     {
         private bool _ignoreUntilReleased = false;
 
-        public Vector2 MouseWorldPosition => Raylib.GetMousePosition();
+        public Vector2 MouseWorldPosition => Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), RaylibRenderer.MainCamera);
         
         public bool IsLeftMouseDown 
         {
