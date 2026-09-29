@@ -1,8 +1,11 @@
-﻿namespace BilliardsGame.Interfaces
+using BilliardsGame.Interfaces.Enums;
+namespace BilliardsGame.Interfaces
 {
     public interface IPlayer
     {
         int Id { get; }
         string Name { get; }
+        BallType? AssignedType { get; set; }
+        int Score { get; set; }
     }
 }

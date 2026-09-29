@@ -1,8 +1,10 @@
-﻿using System.Numerics;
+using System.Numerics;
 using Moq;
 using Xunit;
 using BilliardsGame.Core;
 using BilliardsGame.Interfaces;
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 using System;
 
 namespace BilliardsGame.Core.Tests

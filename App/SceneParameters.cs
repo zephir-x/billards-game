@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using BilliardsGame.Interfaces;
+using BilliardsGame.Interfaces.Enums;
+using BilliardsGame.Interfaces.Models;
 
 namespace BilliardsGame.App
 {
@@ -22,6 +24,7 @@ namespace BilliardsGame.App
         public IReadOnlyCollection<IPhysicsBody> Bodies => _physicsEngine.GetBodies();
         public IReadOnlyCollection<IPocket> Pockets => _physicsEngine.GetPockets();
         public ICueController CueInfo => _cueController;
+        public IPlayer Player1 => _gameManager.Player1;
+        public IPlayer Player2 => _gameManager.Player2;
     }
 }
-

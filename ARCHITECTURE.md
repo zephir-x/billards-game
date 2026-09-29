@@ -65,12 +65,36 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] Overheat mechanic: Modifying `CueController` so that hitting `Power > 1.0` blocks shooting and triggers a slow cooldown drain back to `0.0`.
   - [x] UI Power Bar: Render a dynamic Power Bar (filling up and changing color) completely outside the physical table boundaries.
 
-- **Phase 7: Win States, Logic Bugs & Menus [Next]**
+- **Phase 7: Win States, Logic Bugs & Menus [Completed]**
   - [x] **Urgent Bug Fixes - White Ball Sinking (Scratch/Foul):** Currently, sinking the white ball permanently despawns it, soft-locking the `GameManager` in `SimulatingBalls` or crashing aiming calculations. The engine must track the white ball state and respawn it upon turn end if sank (Foul penalty logic).
   - [x] **Urgent Bug Fixes - Black Ball Sinking (Win Condition):** Sinking the object ball (black ball) currently does nothing but despawn it. The Engine must broadcast a win event, ending the session and jumping the state to `GameOver`.
   - [x] Main Menu Flow: Add a starting splash screen capturing user input for `Play` or `Exit` buttons explicitly blocking game loop start.
   - [x] In-Game Menu overlay: Override `ESC` key handling (preventing the default Raylib abrupt application exit) to raise an in-game pause overlay screen with clickable buttons: `Continue`, `Restart`, and `Exit`.
   - [x] HUD Implementation: Build a Top-Center GUI mapping the current scores, balls left, and formatted `Turn: Player X` tag.
+
+- **Phase 8: Table UI Polish, Visual Feedback & Collision Hitboxes [Completed]**
+  - [x] **Hitbox/Visual Synchronization:** Recalibrated rendering alignment explicitly using custom quad geometry mapping over 16 independent jaw buffers preventing physics tunneling while mimicking accurate pool boundaries.
+  - [x] **Table Aesthetics:** Thickened rails, inner bevels, custom cutouts per pocket.
+  - [x] **Ghost Guide (Aim Line):** Ethereal dashed rendering for cue prediction modeling vectors against physics overlaps.
+  - [x] **UI/HUD Overhaul:** Segmented dedicated scoring zones (Player 1 left, Player 2 right) explicitly awaiting Phase 9 Ball entities.
+
+- **Phase 9: 8-Ball Game Mode & Tiers (Full Rack Setup) [Completed]**
+  - [x] **Instancing Full Rack:** Foot spot algorithmic deployment covering true-to-life 8-Ball structure generation overlapping arrays preventing zero-lapses.
+  - [x] **Entity Differentiation (Solid vs Striped):** `BallType` enums introduced mapped to complex rendering properties distinguishing base colors & stripped patterns. 
+  - [x] **Complex Turn Logic (Basic):** Sinking an assigned type continues player turn. Unassigned table assignments dictating suites based on primary sink events.
+
+- **Phase 10: Advanced Adjudication Engine & Testing Framework [Completed]**
+  - [x] **A. Physics Snapshot Metadata Hooking:** The physics engine (`PhysicsEngine`) must track and output metadata exactly per stroke (`StrokeData` context block during `SimulatingBalls`):
+    - `FirstBallHit`: Which specific ball Id the white ball collided with first.
+    - `RailsHit`: How many rails were touched *after* the initial ball-to-ball contact.
+    - `SunkBalls`: A chronological queue of pocketed ball Ids resolving simultaneous sinks.
+  - [x] **B. Foul Validation System (IRulesEngine):** Decouple dirty rule checking out of `GameManager` creating a dedicated isolated `RuleValidator`. It evaluates stroke data against the table pool state to determine legal strokes:
+    - *Open Table Fault:* Hitting the 8-Ball primary when the table assignment is open.
+    - *Wrong Tier Fault:* Hitting an opposing stripe/solid explicitly first.
+    - *No Rail Fault:* Soft defensive taps preventing game flow (if nothing sunk, ball must eventually hit a rail after strike).
+    - *Scratch & Sink Fault:* Sinking the white ball concurrently whilst sinking a correct object ball (should invalidate the continuation logic immediately).
+  - [x] **C. Ball-in-Hand Interactive Placement:** Overwrite hardcoded white ball spawn mechanisms with an interactive state `GameState.BallInHand`. After a foul, the player can dynamically ghost-place the white ball with mouse cursor clicking anywhere on the board validated safe (`Vector2` overlaps via safe collision check).
+  - [x] **D. Automated Theory Testing Framework (The "How-To-Test" Solution):** To prevent manual QA-attrition reproducing a billion billiard outcomes, `BilliardsGame.Core.Tests` MUST introduce data-driven xUnit `[Theory]` definitions parsing a robust set of edge case matrix states mimicking instantaneous shot outcomes. Mock the `PhysicsEngine.StrokeData` property to return rigged histories and enforce `RuleValidator` behaviors to assert Turn and Foul conditions rapidly.
 
 ---
 
