@@ -273,20 +273,11 @@ namespace BilliardsGame.App
 
                 var p1 = _sceneData.Player1;
                 var p2 = _sceneData.Player2;
-                int p1Pocketed = 0; string? p1Type = "None";
-                if (p1?.AssignedType != null) {
-                    p1Type = p1.AssignedType.ToString();
-                    int rem = 0;
-                    if (_sceneData.Bodies != null) { foreach(var b in _sceneData.Bodies) { if(b is ICircleBody cb && cb.BallType == p1.AssignedType) rem++; } }
-                    p1Pocketed = 7 - rem;
-                }
-                int p2Pocketed = 0; string? p2Type = "None";
-                if (p2?.AssignedType != null) {
-                    p2Type = p2.AssignedType.ToString();
-                    int rem = 0;
-                    if (_sceneData.Bodies != null) { foreach(var b in _sceneData.Bodies) { if(b is ICircleBody cb && cb.BallType == p2.AssignedType) rem++; } }
-                    p2Pocketed = 7 - rem;
-                }
+                string p1Type = p1?.AssignedType != null ? p1.AssignedType.ToString()! : "None";
+                int p1Pocketed = p1?.Score ?? 0;
+                
+                string p2Type = p2?.AssignedType != null ? p2.AssignedType.ToString()! : "None";
+                int p2Pocketed = p2?.Score ?? 0;
 
                 int boxW = 280;
                 int boxH = 130;

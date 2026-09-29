@@ -6,5 +6,6 @@ namespace BilliardsGame.Interfaces
         int Id { get; }
         string Name { get; }
         BallType? AssignedType { get; set; }
+        int Score { get; set; }
     }
 }

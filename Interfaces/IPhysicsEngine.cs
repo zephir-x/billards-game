@@ -11,6 +11,8 @@ namespace BilliardsGame.Interfaces
     {
         StrokeData CurrentStrokeData { get; }
 
+        System.Drawing.RectangleF GetPlayfieldBounds();
+
         void ResetStrokeData();
 
         /// <summary>

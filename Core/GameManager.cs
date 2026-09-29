@@ -77,8 +77,9 @@ namespace BilliardsGame.Core
                         
                         // Enforce placement inside the table's green cloth boundary
                         // Ball radius is 10f, cushion limits are (200..800, 200..600)
-                        bool isInsideBounds = mousePos.X >= 110f && mousePos.X <= 690f && // bounds shifted corresponding to actual dimensions 
-                                              mousePos.Y >= 110f && mousePos.Y <= 490f;
+                        var bounds = _physicsEngine.GetPlayfieldBounds();
+                        bool isInsideBounds = mousePos.X >= bounds.Left && mousePos.X <= bounds.Right &&
+                                              mousePos.Y >= bounds.Top && mousePos.Y <= bounds.Bottom;
 
                         bool isValidPlacement = isInsideBounds;
 
@@ -243,6 +244,10 @@ namespace BilliardsGame.Core
                                 }
                             }
                         }
+
+                        // Update scores
+                        _player1.Score = _player1.AssignedType != null ? 7 - currentBodies.Count(b => b is ICircleBody cb && cb.BallType == _player1.AssignedType) : 0;
+                        _player2.Score = _player2.AssignedType != null ? 7 - currentBodies.Count(b => b is ICircleBody cb && cb.BallType == _player2.AssignedType) : 0;
 
                         switch (ruleResult)
                         {

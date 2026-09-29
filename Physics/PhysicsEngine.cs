@@ -22,6 +22,11 @@ namespace BilliardsGame.Physics
 
         public StrokeData CurrentStrokeData { get; private set; }
 
+        public System.Drawing.RectangleF GetPlayfieldBounds()
+        {
+            return new System.Drawing.RectangleF(210f, 210f, 790f - 210f, 590f - 210f);
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="PhysicsEngine"/> class.
         /// </summary>
