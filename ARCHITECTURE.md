@@ -84,17 +84,32 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] **Complex Turn Logic (Basic):** Sinking an assigned type continues player turn. Unassigned table assignments dictating suites based on primary sink events.
 
 - **Phase 10: Advanced Adjudication Engine & Testing Framework [Completed]**
-  - [x] **A. Physics Snapshot Metadata Hooking:** The physics engine (`PhysicsEngine`) must track and output metadata exactly per stroke (`StrokeData` context block during `SimulatingBalls`):
-    - `FirstBallHit`: Which specific ball Id the white ball collided with first.
-    - `RailsHit`: How many rails were touched *after* the initial ball-to-ball contact.
-    - `SunkBalls`: A chronological queue of pocketed ball Ids resolving simultaneous sinks.
-  - [x] **B. Foul Validation System (IRulesEngine):** Decouple dirty rule checking out of `GameManager` creating a dedicated isolated `RuleValidator`. It evaluates stroke data against the table pool state to determine legal strokes:
+  - [x] **A. Physics Snapshot Metadata Hooking:** The physics engine (PhysicsEngine) must track and output metadata exactly per stroke (StrokeData context block during SimulatingBalls):
+    - FirstBallHit: Which specific ball Id the white ball collided with first.
+    - RailsHit: How many rails were touched *after* the initial ball-to-ball contact.
+    - SunkBalls: A chronological queue of pocketed ball Ids resolving simultaneous sinks.
+  - [x] **B. Foul Validation System (IRulesEngine):** Decouple dirty rule checking out of GameManager creating a dedicated isolated RuleValidator. It evaluates stroke data against the table pool state to determine legal strokes:
     - *Open Table Fault:* Hitting the 8-Ball primary when the table assignment is open.
     - *Wrong Tier Fault:* Hitting an opposing stripe/solid explicitly first.
     - *No Rail Fault:* Soft defensive taps preventing game flow (if nothing sunk, ball must eventually hit a rail after strike).
     - *Scratch & Sink Fault:* Sinking the white ball concurrently whilst sinking a correct object ball (should invalidate the continuation logic immediately).
-  - [x] **C. Ball-in-Hand Interactive Placement:** Overwrite hardcoded white ball spawn mechanisms with an interactive state `GameState.BallInHand`. After a foul, the player can dynamically ghost-place the white ball with mouse cursor clicking anywhere on the board validated safe (`Vector2` overlaps via safe collision check).
-  - [x] **D. Automated Theory Testing Framework (The "How-To-Test" Solution):** To prevent manual QA-attrition reproducing a billion billiard outcomes, `BilliardsGame.Core.Tests` MUST introduce data-driven xUnit `[Theory]` definitions parsing a robust set of edge case matrix states mimicking instantaneous shot outcomes. Mock the `PhysicsEngine.StrokeData` property to return rigged histories and enforce `RuleValidator` behaviors to assert Turn and Foul conditions rapidly.
+  - [x] **C. Ball-in-Hand Interactive Placement:** Overwrite hardcoded white ball spawn mechanisms with an interactive state GameState.BallInHand. After a foul, the player can dynamically ghost-place the white ball with mouse cursor clicking anywhere on the board validated safe (Vector2 overlaps via safe collision check).
+  - [x] **D. Automated Theory Testing Framework (The "How-To-Test" Solution):** To prevent manual QA-attrition reproducing a billion billiard outcomes, BilliardsGame.Core.Tests MUST introduce data-driven xUnit [Theory] definitions parsing a robust set of edge case matrix states mimicking instantaneous shot outcomes. Mock the PhysicsEngine.StrokeData property to return rigged histories and enforce RuleValidator behaviors to assert Turn and Foul conditions rapidly.
+
+- **Phase 11: Gameplay Polish & Visual UX [Completed]**
+  - [x] **Ball Rotation (2D Illusion):** Stored a visual RotationAngle inside ICircleBody. Increment this angle relative to the velocity vector magnitude and delta time ($ \Delta \theta = (||v|| / r) \cdot dt $). Numbers and stripe lines rotate perfectly without a 3D engine.
+  - [x] **Dynamic Power Bar:** Interpolated the power bar color from Blue (0.0) to Orange (0.99) dynamically as it charges. Matches pure Red (1.0) during Overheat cooldown penalty.
+  - [x] **Aim Lock Constraint:** Modified GameManager and CueController so the aim trajectory locks onto the target point during the charge sequence, avoiding mis-clicks slipping the aim line.
+  - [x] **Overheat Penalty Tuning:** Adjusted cooldown multiplier retaining punishment factor but escaping excessive wait lengths.
+  - [x] **Sink Animation & Rendering Orders:** Converted sunk balls into IsGhost mode crushing its momentum by 98%. Interpolated their fading over 1.5s via Alpha blending. Placed cushion rendering natively covering ball depths eliminating table clipping.
+  - [x] **Match Point Validation & Ball In Hand Rendering:** Validated Ball placement mapping red cursor indicators on overlaps. At 7 pockets filled, golden UI triggers activating visually distinct text warnings.
+  - [x] **Foul Wobble Tooltips:** Replaced aggressive end screens with "MATCH COMPLETE". Rendered soft wobbling "FOUL" contextual hints natively bounded between UI power bar and table geometry.
+
+- **Phase 12: Audio-Visual Overhaul & Release Delivery [Pending]**
+  - **Menu Sliding Capabilities:** Revamp the strict UI block transitions to utilize viewport easing matrices (sliding menus left/right into play space smoothly).
+  - **Audio Implementation:** Utilize Raylib-cs audio device module. Hook up collision events (e.g.,  > \text{threshold}$) in the physics engine to emit *'clack'* pitch-varied sounds. Implement SFX for foul, sink, menu hover and ambient royalty-free BGM loops.
+  - **Codebase Standardization:** Implement broad Roslyn fixes unifying XML <summary> formatting, dropping stale Polish comments explicitly favoring robust structural C# documentation per interface. Format spaces and generic layouts globally.
+  - **Repository & Release Distribution:** Formalize a README.md containing topics, installation parameters, architecture mapping. Structure a dotnet publish -c Release -r win-x64 --self-contained workflow delivering a bundled .exe zip archive with custom .ico binaries.
 
 ---
 

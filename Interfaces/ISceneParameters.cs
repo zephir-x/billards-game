@@ -9,10 +9,14 @@ namespace BilliardsGame.Interfaces
         IPlayer? CurrentTurnPlayer { get; }
         IPlayer? Winner { get; }
         IReadOnlyCollection<IPhysicsBody>? Bodies { get; }
+        IReadOnlyCollection<IPhysicsBody>? GhostBodies { get; }
         IReadOnlyCollection<IPocket>? Pockets { get; }
         ICueController? CueInfo { get; }
 
         IPlayer Player1 { get; }
         IPlayer Player2 { get; }
+        
+        string FoulMessage { get; }
+        float FoulMessageTimer { get; }
     }
 }

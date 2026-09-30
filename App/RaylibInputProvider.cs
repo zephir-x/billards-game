@@ -26,6 +26,15 @@ namespace BilliardsGame.App
             }
         }
         
+        public bool WasLeftMousePressed 
+        {
+            get 
+            {
+                if (_ignoreUntilReleased) return false;
+                return Raylib.IsMouseButtonPressed(MouseButton.Left);
+            }
+        }
+        
         public bool IsLeftMouseDown 
         {
             get 

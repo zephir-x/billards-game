@@ -40,6 +40,11 @@ namespace BilliardsGame.Interfaces
         IReadOnlyCollection<IPhysicsBody> GetBodies();
 
         /// <summary>
+        /// Returns all dying/ghost physics bodies currently fading out.
+        /// </summary>
+        IReadOnlyCollection<IPhysicsBody> GetGhostBodies();
+
+        /// <summary>
         /// Adds a pocket to the simulation to trap balls.
         /// </summary>
         void AddPocket(IPocket pocket);

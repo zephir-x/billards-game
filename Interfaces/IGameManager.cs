@@ -10,6 +10,9 @@ namespace BilliardsGame.Interfaces
         
         IPlayer Player1 { get; }
         IPlayer Player2 { get; }
+        
+        string FoulMessage { get; }
+        float FoulMessageTimer { get; }
 
         void UpdateLogic(float deltaTime);
         void StartGame();

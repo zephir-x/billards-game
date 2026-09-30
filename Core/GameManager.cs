@@ -16,6 +16,9 @@ namespace BilliardsGame.Core
         
         public IPlayer Player1 => _player1;
         public IPlayer Player2 => _player2;
+        
+        public string FoulMessage { get; private set; } = "";
+        public float FoulMessageTimer { get; private set; } = 0f;
 
         public event Action? OnScratchFoul;
         public event Action<Vector2>? OnPlaceCueBall;
@@ -51,9 +54,13 @@ namespace BilliardsGame.Core
         {
             _player1.AssignedType = null;
             _player2.AssignedType = null;
+            _player1.Score = 0;
+            _player2.Score = 0;
             CurrentState = GameState.PlayerTurn;
             ActivePlayer = _player1;
             Winner = null;
+            FoulMessage = "";
+            FoulMessageTimer = 0f;
         }
 
         public void EndTurn()
@@ -64,6 +71,12 @@ namespace BilliardsGame.Core
 
         public void UpdateLogic(float deltaTime)
         {
+            if (FoulMessageTimer > 0f)
+            {
+                FoulMessageTimer -= deltaTime;
+                if (FoulMessageTimer <= 0f) FoulMessage = "";
+            }
+
             switch (CurrentState)
             {
                 case GameState.Menu:
@@ -75,17 +88,14 @@ namespace BilliardsGame.Core
                     {
                         var mousePos = _inputProvider.MouseWorldPosition;
                         
-                        // Enforce placement inside the table's green cloth boundary
-                        // Ball radius is 10f, cushion limits are (200..800, 200..600)
                         var bounds = _physicsEngine.GetPlayfieldBounds();
-                        bool isInsideBounds = mousePos.X >= bounds.Left && mousePos.X <= bounds.Right &&
-                                              mousePos.Y >= bounds.Top && mousePos.Y <= bounds.Bottom;
+                        bool isInsideBounds = mousePos.X >= bounds.Left + 10f && mousePos.X <= bounds.Right - 10f &&
+                                              mousePos.Y >= bounds.Top + 10f && mousePos.Y <= bounds.Bottom - 10f;
 
                         bool isValidPlacement = isInsideBounds;
 
                         if (isValidPlacement)
                         {
-                            // Ensure the ball does not overlap with pockets (would instantly fall)
                             var pockets = _physicsEngine.GetPockets();
                             foreach (var pocket in pockets)
                             {
@@ -106,7 +116,6 @@ namespace BilliardsGame.Core
                                 if (body is ICircleBody circle)
                                 {
                                     float distSq = (circle.Position - mousePos).LengthSquared();
-                                    // 10f cue ball radius + object ball radius
                                     float minDist = circle.Radius + 10f;
                                     if (distSq < minDist * minDist)
                                     {
@@ -134,7 +143,7 @@ namespace BilliardsGame.Core
                         _cueController.UpdateAim(cueBall.Position, _inputProvider.MouseWorldPosition);
                     }
 
-                    if (_inputProvider.IsLeftMouseDown)
+                    if (_inputProvider.WasLeftMousePressed)
                     {
                         CurrentState = GameState.ChargingShot;
                     }
@@ -143,19 +152,26 @@ namespace BilliardsGame.Core
 
                 case GameState.ChargingShot:
                 {
+                    bool wasOverheated = _cueController.IsOverheated;
                     _cueController.UpdateOverheat(deltaTime);
 
-                    var cueBall = GetCueBall();
-                    if (cueBall != null)
+                    if (wasOverheated && !_cueController.IsOverheated)
                     {
-                        _cueController.UpdateAim(cueBall.Position, _inputProvider.MouseWorldPosition);
+                        CurrentState = GameState.PlayerTurn;
+                        break;
                     }
+
+                    var cueBall = GetCueBall();
 
                     if (!_cueController.IsOverheated)
                     {
                         if (_inputProvider.IsLeftMouseDown)
                         {
                             _cueController.ChargeShot(deltaTime);
+                        }
+                        else if (!_inputProvider.WasLeftMouseReleased)
+                        {
+                            CurrentState = GameState.PlayerTurn;
                         }
                         
                         if (_inputProvider.WasLeftMouseReleased)
@@ -167,20 +183,12 @@ namespace BilliardsGame.Core
                                 _cueController.ExecuteShot(cueBall);
                             }
                             
-                            // Snapshot balls before simulation
                             var prev_bodies = _physicsEngine.GetBodies();
                             _ballsAtStartOfTurn = (prev_bodies != null ? prev_bodies : Array.Empty<IPhysicsBody>())
                                 .OfType<ICircleBody>()
                                 .ToList();
 
                             CurrentState = GameState.SimulatingBalls;
-                        }
-                    }
-                    else
-                    {
-                        if (_cueController.Power <= 0.0f)
-                        {
-                            CurrentState = GameState.PlayerTurn;
                         }
                     }
                     break;
@@ -245,13 +253,17 @@ namespace BilliardsGame.Core
                             }
                         }
 
-                        // Update scores
                         _player1.Score = _player1.AssignedType != null ? 7 - currentBodies.Count(b => b is ICircleBody cb && cb.BallType == _player1.AssignedType) : 0;
                         _player2.Score = _player2.AssignedType != null ? 7 - currentBodies.Count(b => b is ICircleBody cb && cb.BallType == _player2.AssignedType) : 0;
 
                         switch (ruleResult)
                         {
                             case RuleResult.Foul:
+                                if (ctx.IsCueBallSunk) { FoulMessage = "FOUL: Scratch"; FoulMessageTimer = 3f; }
+                                else if (ctx.FirstHitBallId == null) { FoulMessage = "FOUL: Missed"; FoulMessageTimer = 3f; }
+                                else if (ctx.PocketedBallIds.Count == 0 && ctx.RailsHitAfterContact == 0) { FoulMessage = "FOUL: No Rail Contact"; FoulMessageTimer = 3f; }
+                                else { FoulMessage = "FOUL: Wrong Ball First"; FoulMessageTimer = 3f; }
+                                
                                 OnScratchFoul?.Invoke();
                                 var existingCueBall = currentBodies.FirstOrDefault(b => b.Id == 0);
                                 if (existingCueBall != null)

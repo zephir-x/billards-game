@@ -44,7 +44,7 @@ namespace BilliardsGame.Core
         {
             if (IsOverheated)
             {
-                Power -= deltaTime * PowerChargeRate * 0.5f; // slower cool down like syrup
+                Power -= deltaTime * PowerChargeRate * 0.65f; // slower cool down like syrup, increased by 30%
                 if (Power <= 0f)
                 {
                     Power = 0f;

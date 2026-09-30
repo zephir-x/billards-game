@@ -22,5 +22,9 @@ namespace BilliardsGame.Interfaces
         /// Optional Number of the ball (0-15).
         /// </summary>
         int Number { get; }
+
+        float RotationAngle { get; set; }
+        bool IsGhost { get; set; }
+        float FadeTimer { get; set; }
     }
 }
