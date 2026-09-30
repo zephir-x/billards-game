@@ -1,4 +1,4 @@
-﻿namespace BilliardsGame.Interfaces.Enums
+namespace BilliardsGame.Interfaces.Enums
 {
     public enum GameState 
     { 
@@ -7,6 +7,6 @@
         ChargingShot, 
         SimulatingBalls, 
         BallInHand,
-        GameOver 
+        GameOver, CallingPocket 
     }
 }

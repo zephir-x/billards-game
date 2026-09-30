@@ -14,6 +14,7 @@ namespace BilliardsGame.Core
         public int RailsHitAfterContact { get; set; }
         public bool IsCueBallSunk { get; set; }
         public bool Is8BallSunk { get; set; }
+        public bool Is8BallSunkInTarget { get; set; }
         public bool AreAllOwnBallsSunkBeforeShot { get; set; }
         public List<BallType> PocketedBallTypes { get; set; } = new List<BallType>();
         public List<int> PocketedBallIds { get; set; } = new List<int>();

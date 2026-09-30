@@ -32,6 +32,20 @@ namespace BilliardsGame.App
             };
         }
 
+        private Color ParseHexColor(string hex)
+        {
+            if (string.IsNullOrEmpty(hex)) return Color.RayWhite;
+            if (hex.StartsWith("#")) hex = hex.Substring(1);
+            if (hex.Length == 6)
+            {
+                byte r = Convert.ToByte(hex.Substring(0, 2), 16);
+                byte g = Convert.ToByte(hex.Substring(2, 2), 16);
+                byte b = Convert.ToByte(hex.Substring(4, 2), 16);
+                return new Color((int)r, (int)g, (int)b, 255);
+            }
+            return Color.RayWhite;
+        }
+
         public void DrawFrame(float interpolationAlpha)
         {
             Raylib.BeginDrawing();
@@ -61,7 +75,7 @@ namespace BilliardsGame.App
                 }
             }
 
-            // Centralized helper to draw balls (including opacity for animations and rotation dots)
+            // Centralized helper to draw balls
             Action<ICircleBody, Vector2, int> DrawBall = (circleBody, renderedPos, alpha) =>
             {
                 Color ballColor = Color.White;
@@ -138,7 +152,6 @@ namespace BilliardsGame.App
                 }
             };
 
-            // 4. Draw Balls (Ghost balls first, underneath normal ones if they overlap right before fading completely)
             if (_sceneData?.GhostBodies != null)
             {
                 foreach (var body in _sceneData.GhostBodies)
@@ -164,7 +177,7 @@ namespace BilliardsGame.App
                 }
             }
 
-            // 5. Draw table rails OVER the balls. This natively solves 'pocket clipping', as sinking balls fall visually under the rail lips!
+            // 5. Draw table rails
             Color railColor = new Color(139, 69, 19, 255);
             Color railBorder = new Color(60, 30, 10, 255);
             
@@ -188,25 +201,61 @@ namespace BilliardsGame.App
                 Raylib.DrawCircleV(v4, t/2, col);
             };
 
-            DrawQuad(new Vector2(210, 180), new Vector2(230, 200), new Vector2(470, 200), new Vector2(480, 180), railColor);
-            DrawQuadLines(new Vector2(210, 180), new Vector2(230, 200), new Vector2(470, 200), new Vector2(480, 180), 3f, railBorder);
+            DrawQuad(new Vector2(212.5f, 180), new Vector2(232.5f, 200), new Vector2(466f, 200), new Vector2(476f, 180), railColor);
+            DrawQuadLines(new Vector2(212.5f, 180), new Vector2(232.5f, 200), new Vector2(466f, 200), new Vector2(476f, 180), 3f, railBorder);
 
-            DrawQuad(new Vector2(520, 180), new Vector2(530, 200), new Vector2(770, 200), new Vector2(790, 180), railColor);
-            DrawQuadLines(new Vector2(520, 180), new Vector2(530, 200), new Vector2(770, 200), new Vector2(790, 180), 3f, railBorder);
+            DrawQuad(new Vector2(524f, 180), new Vector2(534f, 200), new Vector2(767.5f, 200), new Vector2(787.5f, 180), railColor);
+            DrawQuadLines(new Vector2(524f, 180), new Vector2(534f, 200), new Vector2(767.5f, 200), new Vector2(787.5f, 180), 3f, railBorder);
 
-            DrawQuad(new Vector2(230, 600), new Vector2(210, 620), new Vector2(480, 620), new Vector2(470, 600), railColor);
-            DrawQuadLines(new Vector2(230, 600), new Vector2(210, 620), new Vector2(480, 620), new Vector2(470, 600), 3f, railBorder);
+            DrawQuad(new Vector2(232.5f, 600), new Vector2(212.5f, 620), new Vector2(476f, 620), new Vector2(466f, 600), railColor);
+            DrawQuadLines(new Vector2(232.5f, 600), new Vector2(212.5f, 620), new Vector2(476f, 620), new Vector2(466f, 600), 3f, railBorder);
 
-            DrawQuad(new Vector2(530, 600), new Vector2(520, 620), new Vector2(790, 620), new Vector2(770, 600), railColor);
-            DrawQuadLines(new Vector2(530, 600), new Vector2(520, 620), new Vector2(790, 620), new Vector2(770, 600), 3f, railBorder);
+            DrawQuad(new Vector2(534f, 600), new Vector2(524f, 620), new Vector2(787.5f, 620), new Vector2(767.5f, 600), railColor);
+            DrawQuadLines(new Vector2(534f, 600), new Vector2(524f, 620), new Vector2(787.5f, 620), new Vector2(767.5f, 600), 3f, railBorder);
 
-            DrawQuad(new Vector2(180, 210), new Vector2(180, 590), new Vector2(200, 570), new Vector2(200, 230), railColor);
-            DrawQuadLines(new Vector2(180, 210), new Vector2(180, 590), new Vector2(200, 570), new Vector2(200, 230), 3f, railBorder);
+            DrawQuad(new Vector2(180, 212.5f), new Vector2(180, 587.5f), new Vector2(200, 567.5f), new Vector2(200, 232.5f), railColor);
+            DrawQuadLines(new Vector2(180, 212.5f), new Vector2(180, 587.5f), new Vector2(200, 567.5f), new Vector2(200, 232.5f), 3f, railBorder);
 
-            DrawQuad(new Vector2(800, 230), new Vector2(800, 570), new Vector2(820, 590), new Vector2(820, 210), railColor);
-            DrawQuadLines(new Vector2(800, 230), new Vector2(800, 570), new Vector2(820, 590), new Vector2(820, 210), 3f, railBorder);
+            DrawQuad(new Vector2(800, 232.5f), new Vector2(800, 567.5f), new Vector2(820, 587.5f), new Vector2(820, 212.5f), railColor);
+            DrawQuadLines(new Vector2(800, 232.5f), new Vector2(800, 567.5f), new Vector2(820, 587.5f), new Vector2(820, 212.5f), 3f, railBorder);
 
-            // Ball Placement cursor validation and rendering
+            // Blinking Pockets and Click Logic in CallingPocket state (MOVED HERE TO FIX Z-INDEX)
+            if (_sceneData?.CurrentState == GameState.CallingPocket)
+            {
+                float t = (float)Raylib.GetTime();
+                float blinkAlpha = (MathF.Sin(t * 10f) + 1f) / 2f; 
+                Color blinkCol = new Color(255, 255, 0, (int)(255 * blinkAlpha));
+                
+                if (_sceneData.Pockets != null)
+                {
+                    foreach (var pocket in _sceneData.Pockets)
+                    {
+                        Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 28f, blinkCol);
+                        Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 27f, blinkCol);
+                    }
+                }
+
+                Vector2 mouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), MainCamera);
+                if (Raylib.IsMouseButtonPressed(MouseButton.Left) && _sceneData.Pockets != null)
+                {
+                    foreach (var p in _sceneData.Pockets)
+                    {
+                        if ((p.Position - mouseWorld).LengthSquared() < 30f * 30f)
+                        {
+                            _sceneData.SelectTargetPocket(p);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Draw target pocket selection indicator (MOVED HERE TO FIX Z-INDEX)
+            if (_sceneData?.TargetPocket != null && _sceneData.CurrentState == GameState.PlayerTurn)
+            {
+                Raylib.DrawCircleLines((int)_sceneData.TargetPocket.Position.X, (int)_sceneData.TargetPocket.Position.Y, 26f, new Color(255, 215, 0, 150));
+            }
+
+            // Ball Placement cursor
             if (_sceneData?.CurrentState == GameState.BallInHand)
             {
                 Vector2 mouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), MainCamera);
@@ -233,7 +282,7 @@ namespace BilliardsGame.App
                 Raylib.DrawCircleV(mouseWorld, 10f, placementColor);
             }
 
-            // Draw Cue and aiming line
+            // Draw Cue
             if (_sceneData != null && (_sceneData.CurrentState == GameState.ChargingShot || _sceneData.CurrentState == GameState.PlayerTurn))
             {
                 var cueBall = GetCueBall();
@@ -270,7 +319,7 @@ namespace BilliardsGame.App
             }
             Raylib.EndMode2D();
 
-            // Screen space UI
+            // UI
             if (_sceneData != null)
             {
                 if (_sceneData.CurrentState != GameState.Menu && _sceneData.CurrentState != GameState.GameOver)
@@ -279,20 +328,31 @@ namespace BilliardsGame.App
                     int turnTextWidth = Raylib.MeasureText(turnText, 36); 
                     Raylib.DrawText(turnText, 1600 / 2 - turnTextWidth / 2, 20, 36, Color.RayWhite);
 
-                    // Foul Message (Smaller, Wobbling effect, Slightly Higher)
-                    if (!string.IsNullOrEmpty(_sceneData.FoulMessage) && _sceneData.FoulMessageTimer > 0f)
+                    // Notification Fading & Typography
+                    if (!string.IsNullOrEmpty(_sceneData.NotificationMessage) && _sceneData.NotificationTimer > 0f)
                     {
                         Font fn = Raylib.GetFontDefault();
                         int fSize = 28;
-                        int fWidth = (int)Raylib.MeasureTextEx(fn, _sceneData.FoulMessage, fSize, 1f).X;
+                        int fWidth = (int)Raylib.MeasureTextEx(fn, _sceneData.NotificationMessage, fSize, 1f).X;
                         
                         float t = (float)Raylib.GetTime();
-                        float wobbleRot = MathF.Sin(t * 8f) * 2.5f; // Wobble back and forth up to 6 degrees
+                        float wobbleRot = MathF.Sin(t * 8f) * 2.5f; 
                         
+                        float currentTimer = _sceneData.NotificationTimer;
+                        float alphaFraction = 1f;
+
+                        // 3 seconds is max timer
+                        if (currentTimer < 0.5f) { alphaFraction = currentTimer / 0.5f; }
+                        else if (3f - currentTimer < 0.5f) { alphaFraction = (3f - currentTimer) / 0.5f; }
+                        
+                        byte alphaByte = (byte)(255 * Math.Clamp(alphaFraction, 0f, 1f));
+                        Color baseColor = ParseHexColor(_sceneData.NotificationColorHex);
+                        Color drawColor = new Color((int)baseColor.R, (int)baseColor.G, (int)baseColor.B, (int)alphaByte);
+
                         Vector2 origin = new Vector2(fWidth / 2f, fSize / 2f);
                         Vector2 pos = new Vector2(1600 / 2f, 125f);
                         
-                        Raylib.DrawTextPro(fn, _sceneData.FoulMessage, pos, origin, wobbleRot, fSize, 1f, new Color(255, 80, 80, 255));
+                        Raylib.DrawTextPro(fn, _sceneData.NotificationMessage, pos, origin, wobbleRot, fSize, 1f, drawColor);
                     }
 
                     var p1 = _sceneData.Player1;
@@ -307,7 +367,6 @@ namespace BilliardsGame.App
                     int p2X = 1600 - boxW - pad; int p2Y = pad;
                     int titleSize = 28; int valSize = 22;
 
-                    // Player 1 Box
                     Raylib.DrawRectangle(p1X, p1Y, boxW, boxH, new Color(30, 30, 30, 200));
                     if (_sceneData.CurrentTurnPlayer?.Id == 1) Raylib.DrawRectangleLines(p1X, p1Y, boxW, boxH, Color.Orange);
                     else Raylib.DrawRectangleLines(p1X, p1Y, boxW, boxH, Color.DarkGray);
@@ -318,7 +377,6 @@ namespace BilliardsGame.App
                     Raylib.DrawText($"Type: {p1Type}", p1X + boxW/2 - Raylib.MeasureText($"Type: {p1Type}", valSize)/2, p1Y + 55, valSize, Color.LightGray);
                     Raylib.DrawText($"Pocketed: {p1Pocketed}/7", p1X + boxW/2 - Raylib.MeasureText($"Pocketed: {p1Pocketed}/7", valSize)/2, p1Y + 90, valSize, p1ScoreColor);
 
-                    // Player 2 Box 
                     Raylib.DrawRectangle(p2X, p2Y, boxW, boxH, new Color(30, 30, 30, 200));
                     if (_sceneData.CurrentTurnPlayer?.Id == 2) Raylib.DrawRectangleLines(p2X, p2Y, boxW, boxH, Color.Orange);
                     else Raylib.DrawRectangleLines(p2X, p2Y, boxW, boxH, Color.DarkGray);
@@ -329,11 +387,10 @@ namespace BilliardsGame.App
                     Raylib.DrawText($"Type: {p2Type}", p2X + boxW/2 - Raylib.MeasureText($"Type: {p2Type}", valSize)/2, p2Y + 55, valSize, Color.LightGray);
                     Raylib.DrawText($"Pocketed: {p2Pocketed}/7", p2X + boxW/2 - Raylib.MeasureText($"Pocketed: {p2Pocketed}/7", valSize)/2, p2Y + 90, valSize, p2ScoreColor);
 
-                    // Dynamic Power Bar
                     if (_sceneData.CueInfo != null)
                     {
                         int barWidth = 600; int barHeight = 24;
-                        int barX = 1600/2 - barWidth / 2; int barY = 70; // Reverted back to perfectly aesthetic spot
+                        int barX = 1600/2 - barWidth / 2; int barY = 70;
 
                         Raylib.DrawRectangle(barX, barY, barWidth, barHeight, Color.DarkGray);
                         
@@ -349,7 +406,7 @@ namespace BilliardsGame.App
                             int r = (int)(100 + (255 - 100) * p);
                             int g = (int)(150 + (140 - 150) * p);
                             int b = (int)(255 + (0 - 255) * p);
-                            fillColor = new Color((byte)r, (byte)g, (byte)b, (byte)255);
+                            fillColor = new Color(r, g, b, 255);
                         }
                         
                         if (fillWidth > 0) Raylib.DrawRectangle(barX, barY, fillWidth, barHeight, fillColor);
@@ -357,18 +414,9 @@ namespace BilliardsGame.App
                     }
                 }
                 
-                if (_sceneData.CurrentState == GameState.Menu)
-                {
-                    DrawMainMenu();
-                }
-                else if (_sceneData.CurrentState == GameState.GameOver)
-                {
-                    DrawGameOverMenu();
-                }
-                else if (IsPaused)
-                {
-                    DrawPauseMenu();
-                }
+                if (_sceneData.CurrentState == GameState.Menu) DrawMainMenu();
+                else if (_sceneData.CurrentState == GameState.GameOver) DrawGameOverMenu();
+                else if (IsPaused) DrawPauseMenu();
             }
 
             Raylib.EndDrawing();
@@ -440,12 +488,10 @@ namespace BilliardsGame.App
         {
             int screenW = 1600; int screenH = 900;
             Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, 180));
-            // Match Complete text is now Gold (Yellow)
             Raylib.DrawText("MATCH COMPLETE", screenW/2 - Raylib.MeasureText("MATCH COMPLETE", 60)/2, screenH/3 - 60, 60, Color.Gold);
             
             if (_sceneData?.Winner != null)
             {
-                // Winner text returns to standard white
                 string winnerText = "Winner: " + _sceneData.Winner.Name;
                 Raylib.DrawText(winnerText, screenW/2 - Raylib.MeasureText(winnerText, 40)/2, screenH/3 + 20, 40, Color.RayWhite);
             }

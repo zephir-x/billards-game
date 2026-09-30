@@ -28,7 +28,11 @@ namespace BilliardsGame.App
         public IPlayer Player1 => _gameManager.Player1;
         public IPlayer Player2 => _gameManager.Player2;
         
-        public string FoulMessage => _gameManager.FoulMessage;
-        public float FoulMessageTimer => _gameManager.FoulMessageTimer;
+        public string NotificationMessage => _gameManager.NotificationMessage;
+        public float NotificationTimer => _gameManager.NotificationTimer;
+        public string NotificationColorHex => _gameManager.NotificationColorHex;
+        
+        public IPocket? TargetPocket => _gameManager.TargetPocket;
+        public void SelectTargetPocket(IPocket pocket) => _gameManager.SelectTargetPocket(pocket);
     }
 }

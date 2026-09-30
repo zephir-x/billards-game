@@ -122,7 +122,7 @@ namespace BilliardsGame.Physics
                 
                 if (body is ICircleBody circle)
                 {
-                    circle.RotationAngle += (body.Velocity.Length() / circle.Radius) * fixedDeltaTime;
+                    circle.RotationAngle += ((body.Velocity.X + body.Velocity.Y) / circle.Radius) * fixedDeltaTime;
                 }
             }
             
@@ -147,7 +147,7 @@ namespace BilliardsGame.Physics
                     
                     gb.PreviousPosition = gb.Position;
                     gb.Position += gb.Velocity * fixedDeltaTime;
-                    gb.RotationAngle += (gb.Velocity.Length() / gb.Radius) * fixedDeltaTime;
+                    gb.RotationAngle += ((gb.Velocity.X + gb.Velocity.Y) / gb.Radius) * fixedDeltaTime;
 
                     if (gb.FadeTimer <= 0f)
                     {

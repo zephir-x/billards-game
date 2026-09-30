@@ -17,9 +17,12 @@ namespace BilliardsGame.Core
         public IPlayer Player1 => _player1;
         public IPlayer Player2 => _player2;
         
-        public string FoulMessage { get; private set; } = "";
-        public float FoulMessageTimer { get; private set; } = 0f;
+        public string NotificationMessage { get; private set; } = "";
+        public float NotificationTimer { get; private set; } = 0f;
+        public string NotificationColorHex { get; private set; } = "#FFFFFF";
 
+        public IPocket? TargetPocket { get; private set; }
+        
         public event Action? OnScratchFoul;
         public event Action<Vector2>? OnPlaceCueBall;
 
@@ -50,36 +53,72 @@ namespace BilliardsGame.Core
             ActivePlayer = _player1;
         }
 
+        public void SetNotification(string message, string hexColor, float time)
+        {
+            NotificationMessage = message;
+            NotificationColorHex = hexColor;
+            NotificationTimer = time;
+        }
+
         public void StartGame()
         {
             _player1.AssignedType = null;
             _player2.AssignedType = null;
             _player1.Score = 0;
             _player2.Score = 0;
-            CurrentState = GameState.PlayerTurn;
-            ActivePlayer = _player1;
             Winner = null;
-            FoulMessage = "";
-            FoulMessageTimer = 0f;
+            NotificationMessage = "";
+            NotificationTimer = 0f;
+            TargetPocket = null;
+            
+            ActivePlayer = _player1;
+            SetTurnState();
         }
 
         public void EndTurn()
         {
+            TargetPocket = null;
             ActivePlayer = ActivePlayer == _player1 ? _player2 : _player1;
-            CurrentState = GameState.PlayerTurn;
+            SetTurnState();
+        }
+
+        private void SetTurnState()
+        {
+            if (ActivePlayer.Score == 7)
+            {
+                TargetPocket = null;
+                CurrentState = GameState.CallingPocket;
+                SetNotification("Select a pocket for the 8-Ball!", "#FFFF00", 3f);
+            }
+            else
+            {
+                CurrentState = GameState.PlayerTurn;
+            }
+        }
+
+        public void SelectTargetPocket(IPocket pocket)
+        {
+            if (CurrentState == GameState.CallingPocket)
+            {
+                TargetPocket = pocket;
+                CurrentState = GameState.PlayerTurn;
+            }
         }
 
         public void UpdateLogic(float deltaTime)
         {
-            if (FoulMessageTimer > 0f)
+            if (NotificationTimer > 0f)
             {
-                FoulMessageTimer -= deltaTime;
-                if (FoulMessageTimer <= 0f) FoulMessage = "";
+                NotificationTimer -= deltaTime;
+                if (NotificationTimer <= 0f) NotificationMessage = "";
             }
 
             switch (CurrentState)
             {
                 case GameState.Menu:
+                    break;
+
+                case GameState.CallingPocket:
                     break;
 
                 case GameState.BallInHand:
@@ -129,7 +168,7 @@ namespace BilliardsGame.Core
                         if (isValidPlacement)
                         {
                             OnPlaceCueBall?.Invoke(mousePos);
-                            CurrentState = GameState.PlayerTurn;
+                            SetTurnState();
                         }
                     }
                     break;
@@ -224,6 +263,18 @@ namespace BilliardsGame.Core
                             ownBallsRemaining = 7; 
                         }
 
+                        bool is8Sunk = pocketedBalls.Any(b => b.Id == 8);
+                        bool is8SunkInTarget = false;
+                        if (is8Sunk && TargetPocket != null)
+                        {
+                            var sunkBlack = pocketedBalls.First(b => b.Id == 8);
+                            var distSq = (sunkBlack.Position - TargetPocket.Position).LengthSquared();
+                            if (distSq < TargetPocket.Radius * TargetPocket.Radius + 900f) 
+                            {
+                                is8SunkInTarget = true;
+                            }
+                        }
+
                         var ctx = new RuleContext
                         {
                             PlayerAssignedType = ActivePlayer.AssignedType,
@@ -231,7 +282,8 @@ namespace BilliardsGame.Core
                             FirstHitBallType = firstHitType,
                             RailsHitAfterContact = strokeData.RailsHitAfterContact,
                             IsCueBallSunk = pocketedBalls.Any(b => b.Id == 0),
-                            Is8BallSunk = pocketedBalls.Any(b => b.Id == 8),
+                            Is8BallSunk = is8Sunk,
+                            Is8BallSunkInTarget = is8SunkInTarget,
                             AreAllOwnBallsSunkBeforeShot = (ownBallsRemaining == 0),
                             PocketedBallTypes = pocketedBalls.Where(b => b.Id != 0 && b.Id != 8).Select(b => b.BallType).ToList(),
                             PocketedBallIds = pocketedBalls.Select(b => b.Id).ToList()
@@ -249,6 +301,7 @@ namespace BilliardsGame.Core
                                     ActivePlayer.AssignedType = validPocketed.BallType;
                                     IPlayer opponent = ActivePlayer == _player1 ? _player2 : _player1;
                                     opponent.AssignedType = validPocketed.BallType == BallType.Solid ? BallType.Striped : BallType.Solid;
+                                    SetNotification($"Player {ActivePlayer.Id} assigned to {validPocketed.BallType}s!", "#FFFF00", 3f);
                                 }
                             }
                         }
@@ -259,10 +312,10 @@ namespace BilliardsGame.Core
                         switch (ruleResult)
                         {
                             case RuleResult.Foul:
-                                if (ctx.IsCueBallSunk) { FoulMessage = "FOUL: Scratch"; FoulMessageTimer = 3f; }
-                                else if (ctx.FirstHitBallId == null) { FoulMessage = "FOUL: Missed"; FoulMessageTimer = 3f; }
-                                else if (ctx.PocketedBallIds.Count == 0 && ctx.RailsHitAfterContact == 0) { FoulMessage = "FOUL: No Rail Contact"; FoulMessageTimer = 3f; }
-                                else { FoulMessage = "FOUL: Wrong Ball First"; FoulMessageTimer = 3f; }
+                                if (ctx.IsCueBallSunk) { SetNotification("FOUL: Scratch", "#FF0000", 3f); }
+                                else if (ctx.FirstHitBallId == null) { SetNotification("FOUL: Missed", "#FF0000", 3f); }
+                                else if (ctx.PocketedBallIds.Count == 0 && ctx.RailsHitAfterContact == 0) { SetNotification("FOUL: No Rail Contact", "#FF0000", 3f); }
+                                else { SetNotification("FOUL: Wrong Ball First", "#FF0000", 3f); }
                                 
                                 OnScratchFoul?.Invoke();
                                 var existingCueBall = currentBodies.FirstOrDefault(b => b.Id == 0);
@@ -270,11 +323,12 @@ namespace BilliardsGame.Core
                                 {
                                     _physicsEngine.RemoveBody(existingCueBall);
                                 }
+                                TargetPocket = null;
                                 ActivePlayer = ActivePlayer == _player1 ? _player2 : _player1;
                                 CurrentState = GameState.BallInHand;
                                 break;
                             case RuleResult.Continue:
-                                CurrentState = GameState.PlayerTurn;
+                                SetTurnState();
                                 break;
                             case RuleResult.TurnLost:
                                 EndTurn();
