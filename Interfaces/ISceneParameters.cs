@@ -18,7 +18,7 @@ namespace BilliardsGame.Interfaces
         
         string NotificationMessage { get; }
         float NotificationTimer { get; }
-        string NotificationColorHex { get; }
+        NotificationType NotificationType { get; }
         
         IPocket? TargetPocket { get; }
     }

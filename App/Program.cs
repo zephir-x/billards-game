@@ -19,6 +19,14 @@ namespace BilliardsGame.App
             Raylib.SetTargetFPS(144); 
             Raylib.SetExitKey(KeyboardKey.Null);
 
+            // Draw frame to banish the Windows default white background instantly
+            Raylib.BeginDrawing();
+            Raylib.ClearBackground(new Color(5, 5, 12, 255));
+            Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
+            int wTextInit = Raylib.MeasureText("Initializing Engine...", 36);
+            Raylib.DrawText("Initializing Engine...", 1600 / 2 - wTextInit / 2, 900 / 2 - 80, 36, Color.RayWhite);
+            Raylib.EndDrawing();
+
             var audioManager = new AudioManager();
             audioManager.Initialize();
 
@@ -150,8 +158,8 @@ namespace BilliardsGame.App
             var cueController = new CueController();
             cueController.OnCueHit += audioManager.PlayCueHit;
             var gameManager = new GameManager(physicsEngine, cueController, inputProvider);
-            gameManager.OnNotificationEvent += (isFoul) => {
-                if (isFoul) audioManager.PlaySFX("foul", 0.08f);
+            gameManager.OnNotificationEvent += (type) => {
+                if (type == BilliardsGame.Interfaces.Enums.NotificationType.Foul) audioManager.PlaySFX("foul", 0.08f);
                 else audioManager.PlaySFX("announcement", 0.08f);
             };
             gameManager.OnPlaceCueBall += (pos) => 

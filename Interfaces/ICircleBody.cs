@@ -25,6 +25,6 @@ namespace BilliardsGame.Interfaces
 
         float RotationAngle { get; set; }
         bool IsGhost { get; set; }
-        float FadeTimer { get; set; }
+        float GhostLifeTime { get; set; }
     }
 }

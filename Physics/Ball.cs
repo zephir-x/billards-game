@@ -43,7 +43,7 @@ namespace BilliardsGame.Physics
 
         public float RotationAngle { get; set; }
         public bool IsGhost { get; set; }
-        public float FadeTimer { get; set; } = 1.5f;
+        public float GhostLifeTime { get; set; } = 1.5f;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Ball"/> class.

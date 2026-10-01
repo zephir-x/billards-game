@@ -30,7 +30,7 @@ namespace BilliardsGame.App
         
         public string NotificationMessage => _gameManager.NotificationMessage;
         public float NotificationTimer => _gameManager.NotificationTimer;
-        public string NotificationColorHex => _gameManager.NotificationColorHex;
+        public NotificationType NotificationType => _gameManager.NotificationType;
         
         public IPocket? TargetPocket => _gameManager.TargetPocket;
     }

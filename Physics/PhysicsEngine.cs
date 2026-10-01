@@ -134,7 +134,7 @@ namespace BilliardsGame.Physics
             {
                 if (_ghostBodies[i] is ICircleBody gb)
                 {
-                    gb.FadeTimer -= fixedDeltaTime * 2.5f;
+                    gb.GhostLifeTime -= fixedDeltaTime * 2.5f;
                     
                     IPocket? closestPocket = null;
                     float minDistSq = float.MaxValue;
@@ -153,7 +153,7 @@ namespace BilliardsGame.Physics
                     gb.Position += gb.Velocity * fixedDeltaTime;
                     gb.RotationAngle += ((gb.Velocity.X + gb.Velocity.Y) / gb.Radius) * fixedDeltaTime;
 
-                    if (gb.FadeTimer <= 0f)
+                    if (gb.GhostLifeTime <= 0f)
                     {
                         _ghostBodies.RemoveAt(i);
                     }

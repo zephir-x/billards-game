@@ -13,7 +13,7 @@ namespace BilliardsGame.Interfaces
         
         string NotificationMessage { get; }
         float NotificationTimer { get; }
-        string NotificationColorHex { get; }
+        NotificationType NotificationType { get; }
         IPocket? TargetPocket { get; }
 
         void SelectTargetPocket(IPocket pocket);
@@ -23,6 +23,6 @@ namespace BilliardsGame.Interfaces
         event System.Action OnScratchFoul;
         event System.Action<System.Numerics.Vector2> OnPlaceCueBall;
         event System.Action OnGameOver;
-        event System.Action<bool> OnNotificationEvent;
+        event System.Action<NotificationType> OnNotificationEvent;
     }
 }

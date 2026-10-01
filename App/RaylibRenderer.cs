@@ -200,7 +200,7 @@ namespace BilliardsGame.App
                     if (body is ICircleBody circleBody)
                     {
                         Vector2 renderedPos = (body.PreviousPosition * (1f - interpolationAlpha)) + (body.Position * interpolationAlpha);
-                        float alphaFraction = Math.Clamp(circleBody.FadeTimer / 1.5f, 0f, 1f);
+                        float alphaFraction = Math.Clamp(circleBody.GhostLifeTime / 1.5f, 0f, 1f);
                         DrawBall(circleBody, renderedPos, (int)(255 * alphaFraction));
                     }
                 }
@@ -272,7 +272,7 @@ namespace BilliardsGame.App
                     foreach (var pocket in _sceneData.Pockets)
                     {
                         Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 28f, blinkCol);
-                           Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 27f, blinkCol);
+                        Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 27f, blinkCol);
                     }
                 }
             }
@@ -374,7 +374,12 @@ namespace BilliardsGame.App
                         else if (3f - currentTimer < 0.5f) { alphaFraction = (3f - currentTimer) / 0.5f; }
                         
                         byte alphaByte = (byte)(255 * Math.Clamp(alphaFraction, 0f, 1f));
-                        Color baseColor = ParseHexColor(_sceneData.NotificationColorHex);
+                        Color baseColor = _sceneData.NotificationType switch {
+                            NotificationType.Foul => new Color(255, 0, 0, 255),
+                            NotificationType.Decision => new Color(255, 255, 0, 255),
+                            NotificationType.Info => new Color(255, 255, 0, 255),
+                            _ => new Color(255, 255, 255, 255)
+                        };
                         Color drawColor = new Color((int)baseColor.R, (int)baseColor.G, (int)baseColor.B, (int)alphaByte);
 
                         Vector2 origin = new Vector2(fWidth / 2f, fSize / 2f);
@@ -579,5 +584,77 @@ namespace BilliardsGame.App
             if (_sceneData?.Bodies == null) return null;
             return (ICircleBody?)System.Linq.Enumerable.FirstOrDefault(_sceneData.Bodies, b => b is ICircleBody cb && cb.BallType == BallType.Cue);
         }
-    }
+        private void DrawBall(ICircleBody circleBody, Vector2 renderedPos, int alpha)
+        {
+            Color ballColor = Color.White;
+            int n = circleBody.Number;
+            
+            if (circleBody.BallType == BallType.Cue) 
+            {
+                ballColor = new Color(255, 255, 255, alpha);
+            }
+            else if (circleBody.BallType == BallType.Black)
+            {
+                ballColor = new Color(20, 20, 20, alpha);
+            }
+            else
+            {
+                int colorIndex = n > 8 ? n - 8 : n;
+                var baseColor = colorIndex switch 
+                {
+                    1 => new Color(255, 215, 0, 255),
+                    2 => new Color(0, 0, 255, 255),
+                    3 => new Color(255, 0, 0, 255),
+                    4 => new Color(128, 0, 128, 255),
+                    5 => new Color(255, 140, 0, 255),
+                    6 => new Color(0, 128, 0, 255),
+                    7 => new Color(128, 0, 0, 255),
+                    _ => Color.White
+                };
+                ballColor = new Color(baseColor.R, baseColor.G, baseColor.B, alpha);
+            }
+
+            Color rayWhiteAlpha = new Color(245, 245, 245, alpha);
+            float rotPhase = circleBody.RotationAngle;
+            float rotPhaseDeg = rotPhase * (180f / MathF.PI);
+            
+            if (circleBody.BallType == BallType.Cue)
+            {
+                Raylib.DrawCircleV(renderedPos, circleBody.Radius, rayWhiteAlpha);
+            }
+            else if (circleBody.BallType == BallType.Solid || circleBody.BallType == BallType.Black)
+            {
+                Raylib.DrawCircleV(renderedPos, circleBody.Radius, ballColor);
+                Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, rayWhiteAlpha);
+            }
+            else if (circleBody.BallType == BallType.Striped)
+            {
+                Raylib.DrawCircleV(renderedPos, circleBody.Radius, rayWhiteAlpha);
+                
+                float cosA = MathF.Cos(rotPhase);
+                float sinA = MathF.Sin(rotPhase);
+                
+                float stripeHalf = circleBody.Radius * 0.65f;
+                for (float dy = -stripeHalf; dy <= stripeHalf; dy += 0.5f)
+                {
+                    float chordX = MathF.Sqrt(circleBody.Radius * circleBody.Radius - dy * dy);
+                    Vector2 p1 = new Vector2(renderedPos.X + (-chordX) * cosA - dy * sinA, renderedPos.Y + (-chordX) * sinA + dy * cosA);
+                    Vector2 p2 = new Vector2(renderedPos.X + chordX * cosA - dy * sinA, renderedPos.Y + chordX * sinA + dy * cosA);
+                    Raylib.DrawLineEx(p1, p2, 1f, ballColor);
+                }
+                Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, rayWhiteAlpha);
+            }
+            
+            if (circleBody.BallType != BallType.Cue)
+            {
+                string numStr = n.ToString();
+                Font font = Raylib.GetFontDefault();
+                float fontSize = 9f;
+                float spacing = 1.0f;
+                Vector2 textSize = Raylib.MeasureTextEx(font, numStr, fontSize, spacing);
+                Vector2 origin = new Vector2(textSize.X / 2f, textSize.Y / 2f);
+                
+                Raylib.DrawTextPro(font, numStr, renderedPos, origin, rotPhaseDeg, fontSize, spacing, new Color(0, 0, 0, alpha));
+            }
+        }}
 }

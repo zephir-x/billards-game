@@ -19,14 +19,14 @@ namespace BilliardsGame.Core
         
         public string NotificationMessage { get; private set; } = "";
         public float NotificationTimer { get; private set; } = 0f;
-        public string NotificationColorHex { get; private set; } = "#FFFFFF";
+        public NotificationType NotificationType { get; private set; } = NotificationType.Info;
 
         public IPocket? TargetPocket { get; private set; }
         
         public event Action? OnScratchFoul;
         public event Action<Vector2>? OnPlaceCueBall;
         public event Action? OnGameOver;
-        public event Action<bool>? OnNotificationEvent;
+        public event Action<NotificationType>? OnNotificationEvent;
 
         private readonly IPhysicsEngine _physicsEngine;
         private readonly ICueController _cueController;
@@ -55,13 +55,12 @@ namespace BilliardsGame.Core
             ActivePlayer = _player1;
         }
 
-        public void SetNotification(string message, string hexColor, float time)
+        public void SetNotification(string message, NotificationType type, float time)
         {
             NotificationMessage = message;
-            NotificationColorHex = hexColor;
+            NotificationType = type;
             NotificationTimer = time;
-            bool isFoul = message.Contains("FOUL");
-            OnNotificationEvent?.Invoke(isFoul);
+            OnNotificationEvent?.Invoke(type);
         }
 
         public void StartGame()
@@ -92,7 +91,7 @@ namespace BilliardsGame.Core
             {
                 TargetPocket = null;
                 CurrentState = GameState.CallingPocket;
-                SetNotification("Select a pocket for the 8-Ball!", "#FFFF00", 3f);
+                SetNotification("Select a pocket for the 8-Ball!", NotificationType.Decision, 3f);
             }
             else
             {
@@ -122,7 +121,7 @@ namespace BilliardsGame.Core
                 case GameState.Menu:
                     break;
 
-                                case GameState.CallingPocket:
+                case GameState.CallingPocket:
                 {
                     if (_inputProvider.WasLeftMousePressed)
                     {
@@ -282,7 +281,7 @@ namespace BilliardsGame.Core
                             ownBallsRemaining = 7; 
                         }
 
-                                                bool is8Sunk = pocketedBalls.Any(b => b.Id == 8);
+                        bool is8Sunk = pocketedBalls.Any(b => b.Id == 8);
                         bool is8SunkInTarget = false;
                         if (is8Sunk && TargetPocket != null)
                         {
@@ -318,7 +317,7 @@ namespace BilliardsGame.Core
                                     ActivePlayer.AssignedType = validPocketed.BallType;
                                     IPlayer opponent = ActivePlayer == _player1 ? _player2 : _player1;
                                     opponent.AssignedType = validPocketed.BallType == BallType.Solid ? BallType.Striped : BallType.Solid;
-                                    SetNotification($"Player {ActivePlayer.Id} assigned to {validPocketed.BallType}s!", "#FFFF00", 3f);
+                                    SetNotification($"Player {ActivePlayer.Id} assigned to {validPocketed.BallType}s!", NotificationType.Decision, 3f);
                                 }
                             }
                         }
@@ -329,10 +328,10 @@ namespace BilliardsGame.Core
                         switch (ruleResult)
                         {
                             case RuleResult.Foul:
-                                if (ctx.IsCueBallSunk) { SetNotification("FOUL: Scratch", "#FF0000", 3f); }
-                                else if (ctx.FirstHitBallId == null) { SetNotification("FOUL: Missed", "#FF0000", 3f); }
-                                else if (ctx.PocketedBallIds.Count == 0 && ctx.RailsHitAfterContact == 0) { SetNotification("FOUL: No Rail Contact", "#FF0000", 3f); }
-                                else { SetNotification("FOUL: Wrong Ball First", "#FF0000", 3f); }
+                                if (ctx.IsCueBallSunk) { SetNotification("FOUL: Scratch", NotificationType.Foul, 3f); }
+                                else if (ctx.FirstHitBallId == null) { SetNotification("FOUL: Missed", NotificationType.Foul, 3f); }
+                                else if (ctx.PocketedBallIds.Count == 0 && ctx.RailsHitAfterContact == 0) { SetNotification("FOUL: No Rail Contact", NotificationType.Foul, 3f); }
+                                else { SetNotification("FOUL: Wrong Ball First", NotificationType.Foul, 3f); }
                                 
                                 OnScratchFoul?.Invoke();
                                 var existingCueBall = currentBodies.FirstOrDefault(b => b.Id == 0);
