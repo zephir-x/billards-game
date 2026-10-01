@@ -33,5 +33,6 @@ namespace BilliardsGame.App
         public NotificationType NotificationType => _gameManager.NotificationType;
         
         public IPocket? TargetPocket => _gameManager.TargetPocket;
+        public bool IsValidCueBallPlacement(System.Numerics.Vector2 position) => _gameManager.IsValidCueBallPlacement(position);
     }
 }

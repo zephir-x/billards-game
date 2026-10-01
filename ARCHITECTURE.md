@@ -272,4 +272,3 @@ $$R_{Pos} = (Pos_{previous} \cdot (1 - \alpha)) + (Pos_{current} \cdot \alpha)$$
 - **$Pos_{previous}$:** Physics state from the previous step.
 - **$Pos_{current}$:** The newly calculated physics state.
 - **$\alpha$:** The time fraction elapsed since the last physics step.
-

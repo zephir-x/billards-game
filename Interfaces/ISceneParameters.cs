@@ -21,5 +21,6 @@ namespace BilliardsGame.Interfaces
         NotificationType NotificationType { get; }
         
         IPocket? TargetPocket { get; }
+        bool IsValidCueBallPlacement(System.Numerics.Vector2 position);
     }
 }

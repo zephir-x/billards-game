@@ -287,24 +287,7 @@ namespace BilliardsGame.App
             if (_sceneData?.CurrentState == GameState.BallInHand)
             {
                 Vector2 mouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), MainCamera);
-                bool isValid = true;
-                
-                if (mouseWorld.X < 220f || mouseWorld.X > 780f || mouseWorld.Y < 220f || mouseWorld.Y > 580f) isValid = false;
-                
-                if (isValid && _sceneData.Pockets != null) {
-                    foreach(var p in _sceneData.Pockets) {
-                        if ((p.Position - mouseWorld).LengthSquared() < p.Radius * p.Radius) { isValid = false; break; }
-                    }
-                }
-                
-                if (isValid && _sceneData.Bodies != null) {
-                    foreach(var b in _sceneData.Bodies) {
-                        if (b is ICircleBody c) {
-                            float minD = c.Radius + 10f;
-                            if ((c.Position - mouseWorld).LengthSquared() < minD * minD) { isValid = false; break; }
-                        }
-                    }
-                }
+                bool isValid = _sceneData.IsValidCueBallPlacement(mouseWorld);
                 
                 Color placementColor = isValid ? new Color(255, 255, 255, 120) : new Color(255, 50, 50, 150);
                 Raylib.DrawCircleV(mouseWorld, 10f, placementColor);

@@ -17,6 +17,7 @@ namespace BilliardsGame.Interfaces
         IPocket? TargetPocket { get; }
 
         void SelectTargetPocket(IPocket pocket);
+        bool IsValidCueBallPlacement(System.Numerics.Vector2 position);
         void UpdateLogic(float deltaTime);
         void StartGame();
         void EndTurn();

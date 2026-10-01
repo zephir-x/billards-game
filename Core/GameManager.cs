@@ -99,6 +99,40 @@ namespace BilliardsGame.Core
             }
         }
 
+        public bool IsValidCueBallPlacement(Vector2 position)
+        {
+            var bounds = _physicsEngine.GetPlayfieldBounds();
+            bool isInsideBounds = position.X >= bounds.Left + 10f && position.X <= bounds.Right - 10f &&
+                                  position.Y >= bounds.Top + 10f && position.Y <= bounds.Bottom - 10f;
+            if (!isInsideBounds) return false;
+
+            var pockets = _physicsEngine.GetPockets();
+            foreach (var pocket in pockets)
+            {
+                if ((pocket.Position - position).LengthSquared() < pocket.Radius * pocket.Radius)
+                {
+                    return false;
+                }
+            }
+
+            var bodies = _physicsEngine.GetBodies();
+            if (bodies != null)
+            {
+                foreach (var body in bodies)
+                {
+                    if (body is ICircleBody circle)
+                    {
+                        float minDist = circle.Radius + 10f;
+                        if ((circle.Position - position).LengthSquared() < minDist * minDist)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
         public void SelectTargetPocket(IPocket pocket)
         {
             if (CurrentState == GameState.CallingPocket)
@@ -144,46 +178,7 @@ namespace BilliardsGame.Core
                     if (_inputProvider.WasLeftMouseReleased)
                     {
                         var mousePos = _inputProvider.MouseWorldPosition;
-                        
-                        var bounds = _physicsEngine.GetPlayfieldBounds();
-                        bool isInsideBounds = mousePos.X >= bounds.Left + 10f && mousePos.X <= bounds.Right - 10f &&
-                                              mousePos.Y >= bounds.Top + 10f && mousePos.Y <= bounds.Bottom - 10f;
-
-                        bool isValidPlacement = isInsideBounds;
-
-                        if (isValidPlacement)
-                        {
-                            var pockets = _physicsEngine.GetPockets();
-                            foreach (var pocket in pockets)
-                            {
-                                float distSqToPocket = (pocket.Position - mousePos).LengthSquared();
-                                if (distSqToPocket < pocket.Radius * pocket.Radius)
-                                {
-                                    isValidPlacement = false;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isValidPlacement)
-                        {
-                            var bodies = _physicsEngine.GetBodies();
-                            foreach (var body in bodies)
-                            {
-                                if (body is ICircleBody circle)
-                                {
-                                    float distSq = (circle.Position - mousePos).LengthSquared();
-                                    float minDist = circle.Radius + 10f;
-                                    if (distSq < minDist * minDist)
-                                    {
-                                        isValidPlacement = false;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (isValidPlacement)
+                        if (IsValidCueBallPlacement(mousePos))
                         {
                             OnPlaceCueBall?.Invoke(mousePos);
                             SetTurnState();
