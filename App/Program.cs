@@ -19,17 +19,28 @@ namespace BilliardsGame.App
             Raylib.SetTargetFPS(144); 
             Raylib.SetExitKey(KeyboardKey.Null);
 
-            // Draw frame to banish the Windows default white background instantly
-            Raylib.BeginDrawing();
-            Raylib.ClearBackground(new Color(5, 5, 12, 255));
-            Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
-            int wTextInit = Raylib.MeasureText("Initializing Engine...", 36);
-            Raylib.DrawText("Initializing Engine...", 1600 / 2 - wTextInit / 2, 900 / 2 - 80, 36, Color.RayWhite);
-            Raylib.EndDrawing();
+                        Action<string> DrawLoadingFrame = (text) =>
+            {
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground(new Color(5, 5, 12, 255));
+                Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
+                
+                int fSize = 36;
+                int wText = Raylib.MeasureText(text, fSize);
+                Raylib.DrawText(text, 1600 / 2 - wText / 2, 900 / 2 - 80, fSize, Color.RayWhite);
+                
+                float t = (float)Raylib.GetTime() * 360f;
+                // Draw spinning gold rings below the text
+                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t, t + 100f, 32, Color.Gold);
+                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t + 180f, t + 280f, 32, Color.Gold);
+                Raylib.EndDrawing();
+            };
+
+            // Banish the Windows default white background instantly
+            DrawLoadingFrame("Initializing Engine");
 
             var audioManager = new AudioManager();
             audioManager.Initialize();
-
             Action[] loadSteps = new Action[]
             {
                 () => audioManager.LoadBGM("menu", "Audio/BGM/bgm_menu.mp3"),
@@ -246,3 +257,4 @@ namespace BilliardsGame.App
         }
     }
 }
+

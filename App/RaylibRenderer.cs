@@ -304,8 +304,11 @@ namespace BilliardsGame.App
                     Vector2 cueDir = _sceneData.CueInfo.CueDirection;
                     if (cueDir != Vector2.Zero)
                     {
-                        for (float d = cueBall.Radius + 12f; d < 120f; d += 15f)
+                        float baseSpacing = 15f;
+                        float dynamicSpacing = baseSpacing + (_sceneData.CueInfo.Power * 15f);
+                        for (int i = 0; i < 7; i++)
                         {
+                            float d = (cueBall.Radius + 12f) + (i * dynamicSpacing);
                             Vector2 ghostPoint = cueBallRenderedPos + (cueDir * d);
                             Raylib.DrawCircleV(ghostPoint, 2f, new Color(255, 255, 255, 120));
                         }
@@ -346,9 +349,6 @@ namespace BilliardsGame.App
                         int fSize = 28;
                         int fWidth = (int)Raylib.MeasureTextEx(fn, _sceneData.NotificationMessage, fSize, 1f).X;
                         
-                        float t = (float)Raylib.GetTime();
-                        float wobbleRot = MathF.Sin(t * 8f) * 2.5f; 
-                        
                         float currentTimer = _sceneData.NotificationTimer;
                         float alphaFraction = 1f;
 
@@ -368,7 +368,7 @@ namespace BilliardsGame.App
                         Vector2 origin = new Vector2(fWidth / 2f, fSize / 2f);
                         Vector2 pos = new Vector2(1600 / 2f, 125f);
                         
-                        Raylib.DrawTextPro(fn, _sceneData.NotificationMessage, pos, origin, wobbleRot, fSize, 1f, drawColor);
+                        Raylib.DrawTextPro(fn, _sceneData.NotificationMessage, pos, origin, 0f, fSize, 1f, drawColor);
                     }
 
                     var p1 = _sceneData.Player1;
