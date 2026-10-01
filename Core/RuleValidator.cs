@@ -38,9 +38,13 @@ namespace BilliardsGame.Core
                     return RuleResult.GameOverLose;
                 }
                 
-                // If the first hit was not the 8-ball, but you sank it?
-                // Actually, if you are on the 8-ball, the first hit MUST be the 8-ball.
+                // If you are on the 8-ball, the first hit MUST be the 8-ball.
                 if (ctx.FirstHitBallType != BallType.Black)
+                {
+                    return RuleResult.GameOverLose;
+                }
+
+                if (!ctx.Is8BallSunkInTarget)
                 {
                     return RuleResult.GameOverLose;
                 }

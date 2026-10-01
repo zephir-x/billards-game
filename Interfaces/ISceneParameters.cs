@@ -21,6 +21,5 @@ namespace BilliardsGame.Interfaces
         string NotificationColorHex { get; }
         
         IPocket? TargetPocket { get; }
-        void SelectTargetPocket(IPocket pocket);
     }
 }

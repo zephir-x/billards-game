@@ -122,8 +122,23 @@ namespace BilliardsGame.Core
                 case GameState.Menu:
                     break;
 
-                case GameState.CallingPocket:
+                                case GameState.CallingPocket:
+                {
+                    if (_inputProvider.WasLeftMousePressed)
+                    {
+                        var mousePos = _inputProvider.MouseWorldPosition;
+                        var pockets = _physicsEngine.GetPockets();
+                        foreach (var pocket in pockets)
+                        {
+                            if ((pocket.Position - mousePos).LengthSquared() < pocket.Radius * pocket.Radius)
+                            {
+                                SelectTargetPocket(pocket);
+                                break;
+                            }
+                        }
+                    }
                     break;
+                }
 
                 case GameState.BallInHand:
                 {
@@ -267,13 +282,11 @@ namespace BilliardsGame.Core
                             ownBallsRemaining = 7; 
                         }
 
-                        bool is8Sunk = pocketedBalls.Any(b => b.Id == 8);
+                                                bool is8Sunk = pocketedBalls.Any(b => b.Id == 8);
                         bool is8SunkInTarget = false;
                         if (is8Sunk && TargetPocket != null)
                         {
-                            var sunkBlack = pocketedBalls.First(b => b.Id == 8);
-                            var distSq = (sunkBlack.Position - TargetPocket.Position).LengthSquared();
-                            if (distSq < TargetPocket.Radius * TargetPocket.Radius + 900f) 
+                            if (strokeData.SunkBallsToPockets.TryGetValue(8, out var sunkPocket) && sunkPocket == TargetPocket)
                             {
                                 is8SunkInTarget = true;
                             }

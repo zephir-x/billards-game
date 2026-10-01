@@ -177,6 +177,7 @@ namespace BilliardsGame.Physics
                     {
                         OnBallPocketed?.Invoke();
                         CurrentStrokeData.SunkBallsIds.Add(body.Id);
+                        CurrentStrokeData.SunkBallsToPockets[body.Id] = pocket;
                         if (body is ICircleBody c)
                         {
                             c.IsGhost = true;

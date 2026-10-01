@@ -33,6 +33,5 @@ namespace BilliardsGame.App
         public string NotificationColorHex => _gameManager.NotificationColorHex;
         
         public IPocket? TargetPocket => _gameManager.TargetPocket;
-        public void SelectTargetPocket(IPocket pocket) => _gameManager.SelectTargetPocket(pocket);
     }
 }

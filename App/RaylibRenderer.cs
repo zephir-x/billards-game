@@ -17,13 +17,13 @@ namespace BilliardsGame.App
         public Action? OnPlayClicked { get; set; }
         public Action? OnExitClicked { get; set; }
         
-                public Action? OnContinueClicked { get; set; }
+        public Action? OnContinueClicked { get; set; }
         public Action? OnRestartClicked { get; set; }
 
         public Action? OnButtonHovered { get; set; }
         private string _lastHoveredId = "none";
         
-                private float _menuXOffset = 1600f;
+        private float _menuXOffset = 1600f;
         private float _pauseXOffset = -1600f;
         private float _gameOverXOffset = 1600f;
         
@@ -64,7 +64,7 @@ namespace BilliardsGame.App
             return Color.RayWhite;
         }
 
-                public void DrawFrame(float interpolationAlpha)
+        public void DrawFrame(float interpolationAlpha)
         {
             Raylib.BeginDrawing();
             
@@ -73,7 +73,7 @@ namespace BilliardsGame.App
             
             if (_sceneData != null)
             {
-                                bool showMenu = (_sceneData.CurrentState == GameState.Menu);
+                bool showMenu = (_sceneData.CurrentState == GameState.Menu);
                 bool showGameOver = (_sceneData.CurrentState == GameState.GameOver);
                 bool showPause = (!showMenu && !showGameOver && IsPaused);
                 
@@ -260,7 +260,7 @@ namespace BilliardsGame.App
             DrawQuad(new Vector2(800, 232.5f), new Vector2(800, 567.5f), new Vector2(820, 587.5f), new Vector2(820, 212.5f), railColor);
             DrawQuadLines(new Vector2(800, 232.5f), new Vector2(800, 567.5f), new Vector2(820, 587.5f), new Vector2(820, 212.5f), 3f, railBorder);
 
-            // Blinking Pockets and Click Logic in CallingPocket state (MOVED HERE TO FIX Z-INDEX)
+            // Blinking Pockets in CallingPocket state
             if (_sceneData?.CurrentState == GameState.CallingPocket)
             {
                 float t = (float)Raylib.GetTime();
@@ -272,25 +272,12 @@ namespace BilliardsGame.App
                     foreach (var pocket in _sceneData.Pockets)
                     {
                         Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 28f, blinkCol);
-                        Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 27f, blinkCol);
-                    }
-                }
-
-                Vector2 mouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), MainCamera);
-                if (Raylib.IsMouseButtonPressed(MouseButton.Left) && _sceneData.Pockets != null)
-                {
-                    foreach (var p in _sceneData.Pockets)
-                    {
-                        if ((p.Position - mouseWorld).LengthSquared() < 30f * 30f)
-                        {
-                            _sceneData.SelectTargetPocket(p);
-                            break;
-                        }
+                           Raylib.DrawCircleLines((int)pocket.Position.X, (int)pocket.Position.Y, 27f, blinkCol);
                     }
                 }
             }
 
-            // Draw target pocket selection indicator (MOVED HERE TO FIX Z-INDEX)
+            // Draw target pocket selection indicator
             if (_sceneData?.TargetPocket != null && _sceneData.CurrentState == GameState.PlayerTurn)
             {
                 Raylib.DrawCircleLines((int)_sceneData.TargetPocket.Position.X, (int)_sceneData.TargetPocket.Position.Y, 26f, new Color(255, 215, 0, 150));
@@ -302,7 +289,7 @@ namespace BilliardsGame.App
                 Vector2 mouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), MainCamera);
                 bool isValid = true;
                 
-                if (mouseWorld.X < 210f || mouseWorld.X > 790f || mouseWorld.Y < 210f || mouseWorld.Y > 590f) isValid = false;
+                if (mouseWorld.X < 220f || mouseWorld.X > 780f || mouseWorld.Y < 220f || mouseWorld.Y > 580f) isValid = false;
                 
                 if (isValid && _sceneData.Pockets != null) {
                     foreach(var p in _sceneData.Pockets) {
@@ -551,7 +538,8 @@ namespace BilliardsGame.App
             if (continueHover && isClick) OnContinueClicked?.Invoke();
             if (restartHover && isClick) OnRestartClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();
-        }        private void DrawGameOverMenu(float offsetX)
+        }        
+        private void DrawGameOverMenu(float offsetX)
         {
             int screenW = 1600; int screenH = 900;
             Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, (int)Math.Clamp(230 * (1f - Math.Abs(offsetX)/1600f), 0, 255)));
