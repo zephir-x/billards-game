@@ -17,8 +17,26 @@ namespace BilliardsGame.App
         public Action? OnPlayClicked { get; set; }
         public Action? OnExitClicked { get; set; }
         
-        public Action? OnContinueClicked { get; set; }
+                public Action? OnContinueClicked { get; set; }
         public Action? OnRestartClicked { get; set; }
+
+        public Action? OnButtonHovered { get; set; }
+        private string _lastHoveredId = "none";
+        
+                private float _menuXOffset = 1600f;
+        private float _pauseXOffset = -1600f;
+        private float _gameOverXOffset = 1600f;
+        
+        private bool _wasShowMenu;
+        private bool _wasShowPause;
+        private bool _wasShowGameOver;
+
+        private float Lerp(float start, float end, float amount)
+        {
+            if (amount > 1f) amount = 1f;
+            if (amount < 0f) amount = 0f;
+            return start + (end - start) * amount;
+        }
 
         public void Initialize(ISceneParameters sceneData)
         {
@@ -46,10 +64,33 @@ namespace BilliardsGame.App
             return Color.RayWhite;
         }
 
-        public void DrawFrame(float interpolationAlpha)
+                public void DrawFrame(float interpolationAlpha)
         {
             Raylib.BeginDrawing();
             
+            float dt = Raylib.GetFrameTime();
+            if (dt > 0.033f) dt = 0.033f; // Cap animation jump for long init frames (30 FPS max jump)
+            
+            if (_sceneData != null)
+            {
+                                bool showMenu = (_sceneData.CurrentState == GameState.Menu);
+                bool showGameOver = (_sceneData.CurrentState == GameState.GameOver);
+                bool showPause = (!showMenu && !showGameOver && IsPaused);
+                
+                if (showMenu && !_wasShowMenu) _menuXOffset = 1600f;
+                if (showPause && !_wasShowPause) _pauseXOffset = 1600f;
+                if (showGameOver && !_wasShowGameOver) _gameOverXOffset = 1600f;
+                
+                _wasShowMenu = showMenu;
+                _wasShowPause = showPause;
+                _wasShowGameOver = showGameOver;
+
+                float easeSpeed = 10f;
+                _menuXOffset = Lerp(_menuXOffset, showMenu ? 0f : -1600f, dt * easeSpeed);
+                _pauseXOffset = Lerp(_pauseXOffset, showPause ? 0f : -1600f, dt * easeSpeed);
+                _gameOverXOffset = Lerp(_gameOverXOffset, showGameOver ? 0f : 1600f, dt * easeSpeed);
+            }
+
             Raylib.ClearBackground(new Color(5, 5, 20, 255));
             Raylib.DrawRectangleGradientH(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
 
@@ -414,120 +455,141 @@ namespace BilliardsGame.App
                     }
                 }
                 
-                if (_sceneData.CurrentState == GameState.Menu) DrawMainMenu();
-                else if (_sceneData.CurrentState == GameState.GameOver) DrawGameOverMenu();
-                else if (IsPaused) DrawPauseMenu();
+                if (_menuXOffset > -1599f) DrawMainMenu(_menuXOffset);
+                if (_gameOverXOffset < 1599f) DrawGameOverMenu(_gameOverXOffset);
+                if (_pauseXOffset > -1599f) DrawPauseMenu(_pauseXOffset);
             }
 
             Raylib.EndDrawing();
         }
         
-        private void DrawMainMenu()
+        private bool DrawModernButton(Rectangle rect, string text, bool isHoverED)
+        {
+            Rectangle shadowRect = new Rectangle(rect.X + 4, rect.Y + 4, rect.Width, rect.Height);
+            Raylib.DrawRectangleRounded(shadowRect, 0.4f, 16, new Color(0, 0, 0, 100));
+
+            Color baseColor = isHoverED ? new Color(74, 82, 102, 255) : new Color(45, 52, 65, 255);
+            Raylib.DrawRectangleRounded(rect, 0.4f, 16, baseColor);
+
+            if (isHoverED)
+            {
+                // Simple generic line thickness wasn't standardized, we'll draw 2 rounded slightly bigger
+                Rectangle outline = new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4);
+                Raylib.DrawRectangleRounded(outline, 0.4f, 16, new Color(255, 190, 20, 200));
+                Raylib.DrawRectangleRounded(rect, 0.4f, 16, baseColor); // Redraw base to cover inside
+            }
+
+            int fontSize = 32;
+            int textW = Raylib.MeasureText(text, fontSize);
+            Vector2 textPos = new Vector2(rect.X + rect.Width / 2f - textW / 2f, rect.Y + rect.Height / 2f - fontSize / 2f);
+            Raylib.DrawText(text, (int)textPos.X, (int)textPos.Y, fontSize, isHoverED ? Color.White : Color.LightGray);
+            
+            return isHoverED;
+        }
+
+        private void DrawMainMenu(float offsetX)
         {
             int screenW = 1600; int screenH = 900;
-            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, 150));
+            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, (int)Math.Clamp(210 * (1f - Math.Abs(offsetX)/1600f), 0, 255)));
             Vector2 mousePos = Raylib.GetMousePosition();
-            bool isClick = Raylib.IsMouseButtonPressed(MouseButton.Left);
+            bool isClick = Raylib.IsMouseButtonReleased(MouseButton.Left);
 
-            int btnWidth = 150; int btnHeight = 80; int gap = 50;
-            int startX = (screenW - (btnWidth * 2 + gap)) / 2;
+            int btnWidth = 260; int btnHeight = 70; int gap = 40;
+            int startX = (screenW - (btnWidth * 2 + gap)) / 2 + (int)offsetX;
             int startY = screenH / 2 - btnHeight / 2 + 50;
+
+            int titleW = Raylib.MeasureText("2D Billiards", 100);
+            Raylib.DrawText("2D Billiards", (int)offsetX + screenW / 2 - titleW / 2, 200, 100, Color.RayWhite);
+            
+            // Add a little subtitle
+            Raylib.DrawText("Zephir Edition", (int)offsetX + screenW / 2 - Raylib.MeasureText("Zephir Edition", 30) / 2, 310, 30, Color.Gold);
 
             Rectangle playRect = new Rectangle(startX, startY, btnWidth, btnHeight);
             Rectangle exitRect = new Rectangle(startX + btnWidth + gap, startY, btnWidth, btnHeight);
 
             bool playHover = Raylib.CheckCollisionPointRec(mousePos, playRect);
             bool exitHover = Raylib.CheckCollisionPointRec(mousePos, exitRect);
+            string currentHover = playHover ? "play" : (exitHover ? "exit" : "none");
+            if (currentHover != "none" && currentHover != _lastHoveredId) OnButtonHovered?.Invoke();
+            _lastHoveredId = currentHover;
 
-            Raylib.DrawRectangleRec(playRect, playHover ? Color.DarkGray : Color.Gray);
-            Raylib.DrawRectangleRec(exitRect, exitHover ? Color.DarkGray : Color.Gray);
-
-            Raylib.DrawText("Play", startX + btnWidth/2 - Raylib.MeasureText("Play", 30)/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
-            Raylib.DrawText("Exit", (startX + btnWidth + gap) + btnWidth/2 - Raylib.MeasureText("Exit", 30)/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
-            Raylib.DrawText("MAIN MENU", screenW/2 - Raylib.MeasureText("MAIN MENU", 50)/2, screenH/3 - 50, 50, Color.RayWhite);
+            DrawModernButton(playRect, "Play", playHover);
+            DrawModernButton(exitRect, "Exit", exitHover);
 
             if (playHover && isClick) OnPlayClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();
-        }
-
-        private void DrawPauseMenu()
+        }        private void DrawPauseMenu(float offsetX)
         {
             int screenW = 1600; int screenH = 900;
-            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, 150));
-            Vector2 mousePos = Raylib.GetMousePosition();
-            bool isClick = Raylib.IsMouseButtonPressed(MouseButton.Left);
+            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, (int)Math.Clamp(210 * (1f - Math.Abs(offsetX)/1600f), 0, 255)));
+            
+            int titleW = Raylib.MeasureText("PAUSED", 80);
+            Raylib.DrawText("PAUSED", (int)offsetX + screenW / 2 - titleW / 2, 200, 80, Color.RayWhite);
 
-            int btnWidth = 200; int btnHeight = 60; int gap = 20;
-            int startX = screenW / 2 - btnWidth / 2;
+            int btnWidth = 320; int btnHeight = 70; int gap = 24;
+            int startX = (int)offsetX + screenW / 2 - btnWidth / 2;
             int startY = screenH / 2 - (btnHeight * 3 + gap * 2) / 2 + 50;
+
+            Vector2 mousePos = Raylib.GetMousePosition();
+            bool isClick = Raylib.IsMouseButtonReleased(MouseButton.Left);
 
             Rectangle continueRect = new Rectangle(startX, startY, btnWidth, btnHeight);
             Rectangle restartRect = new Rectangle(startX, startY + btnHeight + gap, btnWidth, btnHeight);
             Rectangle exitRect = new Rectangle(startX, startY + (btnHeight + gap) * 2, btnWidth, btnHeight);
-
+            
             bool continueHover = Raylib.CheckCollisionPointRec(mousePos, continueRect);
             bool restartHover = Raylib.CheckCollisionPointRec(mousePos, restartRect);
             bool exitHover = Raylib.CheckCollisionPointRec(mousePos, exitRect);
+            string currentHover = continueHover ? "continue" : (restartHover ? "restart" : (exitHover ? "exit" : "none"));
+            if (currentHover != "none" && currentHover != _lastHoveredId) OnButtonHovered?.Invoke();
+            _lastHoveredId = currentHover;
 
-            Raylib.DrawRectangleRec(continueRect, continueHover ? Color.DarkGray : Color.Gray);
-            Raylib.DrawRectangleRec(restartRect, restartHover ? Color.DarkGray : Color.Gray);
-            Raylib.DrawRectangleRec(exitRect, exitHover ? Color.DarkGray : Color.Gray);
-
-            Raylib.DrawText("Continue", startX + btnWidth/2 - Raylib.MeasureText("Continue", 30)/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
-            Raylib.DrawText("Restart", startX + btnWidth/2 - Raylib.MeasureText("Restart", 30)/2, startY + btnHeight + gap + btnHeight/2 - 15, 30, Color.RayWhite);
-            Raylib.DrawText("Exit", startX + btnWidth/2 - Raylib.MeasureText("Exit", 30)/2, startY + (btnHeight + gap)*2 + btnHeight/2 - 15, 30, Color.RayWhite);
-            
-            Raylib.DrawText("PAUSED", screenW/2 - Raylib.MeasureText("PAUSED", 50)/2, screenH/3 - 50, 50, Color.RayWhite);
+            DrawModernButton(continueRect, "Continue", continueHover);
+            DrawModernButton(restartRect, "Restart", restartHover);
+            DrawModernButton(exitRect, "Exit", exitHover);
 
             if (continueHover && isClick) OnContinueClicked?.Invoke();
             if (restartHover && isClick) OnRestartClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();
-        }
-        
-        private void DrawGameOverMenu()
+        }        private void DrawGameOverMenu(float offsetX)
         {
             int screenW = 1600; int screenH = 900;
-            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, 180));
-            Raylib.DrawText("MATCH COMPLETE", screenW/2 - Raylib.MeasureText("MATCH COMPLETE", 60)/2, screenH/3 - 60, 60, Color.Gold);
-            
-            if (_sceneData?.Winner != null)
-            {
-                string winnerText = "Winner: " + _sceneData.Winner.Name;
-                Raylib.DrawText(winnerText, screenW/2 - Raylib.MeasureText(winnerText, 40)/2, screenH/3 + 20, 40, Color.RayWhite);
-            }
-            
-            Vector2 mousePos = Raylib.GetMousePosition();
-            bool isClick = Raylib.IsMouseButtonPressed(MouseButton.Left);
+            Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, (int)Math.Clamp(230 * (1f - Math.Abs(offsetX)/1600f), 0, 255)));
 
-            int btnWidth = 200; int btnHeight = 60; int gap = 20;
-            int startX = screenW / 2 - btnWidth / 2;
-            int startY = screenH / 2 + 50;
+            string matchComplTxt = "Match Completed";
+            int mcTitleW = Raylib.MeasureText(matchComplTxt, 40);
+            Raylib.DrawText(matchComplTxt, (int)offsetX + screenW / 2 - mcTitleW / 2, 160, 40, Color.LightGray);
+            
+            string winnerTxt = (_sceneData?.Winner != null) ? _sceneData.Winner.Name + " Wins!" : "Draw!";
+            int titleW = Raylib.MeasureText(winnerTxt, 90);
+            Raylib.DrawText(winnerTxt, (int)offsetX + screenW / 2 - titleW / 2, 220, 90, Color.Gold);
+
+            int btnWidth = 320; int btnHeight = 70; int gap = 24;
+            int startX = (int)offsetX + screenW / 2 - btnWidth / 2;
+            int startY = screenH / 2 - 20;
+
+            Vector2 mousePos = Raylib.GetMousePosition();
+            bool isClick = Raylib.IsMouseButtonReleased(MouseButton.Left);
 
             Rectangle restartRect = new Rectangle(startX, startY, btnWidth, btnHeight);
             Rectangle exitRect = new Rectangle(startX, startY + btnHeight + gap, btnWidth, btnHeight);
-
+            
             bool restartHover = Raylib.CheckCollisionPointRec(mousePos, restartRect);
             bool exitHover = Raylib.CheckCollisionPointRec(mousePos, exitRect);
+            string currentHover = restartHover ? "restart" : (exitHover ? "exit" : "none");
+            if (currentHover != "none" && currentHover != _lastHoveredId) OnButtonHovered?.Invoke();
+            _lastHoveredId = currentHover;
 
-            Raylib.DrawRectangleRec(restartRect, restartHover ? Color.DarkGray : Color.Gray);
-            Raylib.DrawRectangleRec(exitRect, exitHover ? Color.DarkGray : Color.Gray);
-            
-            Raylib.DrawText("Restart", startX + btnWidth/2 - Raylib.MeasureText("Restart", 30)/2, startY + btnHeight/2 - 15, 30, Color.RayWhite);
-            Raylib.DrawText("Exit", startX + btnWidth/2 - Raylib.MeasureText("Exit", 30)/2, startY + btnHeight + gap + btnHeight/2 - 15, 30, Color.RayWhite);
-            
+            DrawModernButton(restartRect, "Play Again", restartHover);
+            DrawModernButton(exitRect, "Exit", exitHover);
+
             if (restartHover && isClick) OnRestartClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();
         }
-        
         private ICircleBody? GetCueBall()
         {
             if (_sceneData?.Bodies == null) return null;
-            foreach (var body in _sceneData.Bodies)
-            {
-                if (body.Id == 0 && body is ICircleBody circle)
-                    return circle;
-            }
-            return null;
+            return (ICircleBody?)System.Linq.Enumerable.FirstOrDefault(_sceneData.Bodies, b => b is ICircleBody cb && cb.BallType == BallType.Cue);
         }
     }
 }

@@ -105,11 +105,11 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] **Match Point Validation & Ball In Hand Rendering:** Validated Ball placement mapping red cursor indicators on overlaps. At 7 pockets filled, golden UI triggers activating visually distinct text warnings.
   - [x] **Foul Wobble Tooltips:** Replaced aggressive end screens with "MATCH COMPLETE". Rendered soft wobbling "FOUL" contextual hints natively bounded between UI power bar and table geometry.
 
-- **Phase 12: Audio-Visual Overhaul & Release Delivery [Pending]**
-  - **Menu Sliding Capabilities:** Revamp the strict UI block transitions to utilize viewport easing matrices (sliding menus left/right into play space smoothly).
-  - **Audio Implementation:** Utilize Raylib-cs audio device module. Hook up collision events (e.g.,  > \text{threshold}$) in the physics engine to emit *'clack'* pitch-varied sounds. Implement SFX for foul, sink, menu hover and ambient royalty-free BGM loops.
-  - **Codebase Standardization:** Implement broad Roslyn fixes unifying XML <summary> formatting, dropping stale Polish comments explicitly favoring robust structural C# documentation per interface. Format spaces and generic layouts globally.
-  - **Repository & Release Distribution:** Formalize a README.md containing topics, installation parameters, architecture mapping. Structure a dotnet publish -c Release -r win-x64 --self-contained workflow delivering a bundled .exe zip archive with custom .ico binaries.
+- **Phase 12: Audio-Visual Overhaul & Release Delivery [In Progress]**
+  - [x] **Menu Sliding Capabilities:** Revamp the strict UI block transitions to utilize viewport easing matrices (sliding menus left/right into play space smoothly). Bounded delta time (max 0.033s) to prevent erratic slides. Overhauled button styles and background dimming gradients.
+  - [x] **Audio Implementation:** Utilize Raylib-cs audio device module. Added OnNotificationEvent hooked explicitly for rendering feedback SFX (fouls, assignments). Eased volume scales preventing audio peaking.
+  - [ ] **Codebase Standardization:** Implement broad Roslyn fixes unifying XML <summary> formatting, dropping stale Polish comments explicitly favoring robust structural C# documentation per interface. Format spaces and generic layouts globally.
+  - [ ] **Repository & Release Distribution:** Formalize a README.md containing topics, installation parameters, architecture mapping. Structure a dotnet publish -c Release -r win-x64 --self-contained workflow delivering a bundled .exe zip archive with custom .ico binaries.
 
 ---
 
@@ -272,3 +272,4 @@ $$R_{Pos} = (Pos_{previous} \cdot (1 - \alpha)) + (Pos_{current} \cdot \alpha)$$
 - **$Pos_{previous}$:** Physics state from the previous step.
 - **$Pos_{current}$:** The newly calculated physics state.
 - **$\alpha$:** The time fraction elapsed since the last physics step.
+

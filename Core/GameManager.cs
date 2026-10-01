@@ -25,6 +25,8 @@ namespace BilliardsGame.Core
         
         public event Action? OnScratchFoul;
         public event Action<Vector2>? OnPlaceCueBall;
+        public event Action? OnGameOver;
+        public event Action<bool>? OnNotificationEvent;
 
         private readonly IPhysicsEngine _physicsEngine;
         private readonly ICueController _cueController;
@@ -58,6 +60,8 @@ namespace BilliardsGame.Core
             NotificationMessage = message;
             NotificationColorHex = hexColor;
             NotificationTimer = time;
+            bool isFoul = message.Contains("FOUL");
+            OnNotificationEvent?.Invoke(isFoul);
         }
 
         public void StartGame()
@@ -336,11 +340,11 @@ namespace BilliardsGame.Core
                             case RuleResult.GameOverWin:
                                 Winner = ActivePlayer;
                                 CurrentState = GameState.GameOver;
-                                break;
+                                OnGameOver?.Invoke(); break;
                             case RuleResult.GameOverLose:
                                 Winner = ActivePlayer == _player1 ? _player2 : _player1;
                                 CurrentState = GameState.GameOver;
-                                break;
+                                OnGameOver?.Invoke(); break;
                         }
                     }
                     break;

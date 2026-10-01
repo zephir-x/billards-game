@@ -22,5 +22,7 @@ namespace BilliardsGame.Interfaces
         void EndTurn();
         event System.Action OnScratchFoul;
         event System.Action<System.Numerics.Vector2> OnPlaceCueBall;
+        event System.Action OnGameOver;
+        event System.Action<bool> OnNotificationEvent;
     }
 }

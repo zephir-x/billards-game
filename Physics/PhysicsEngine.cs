@@ -20,6 +20,10 @@ namespace BilliardsGame.Physics
 
         public StrokeData CurrentStrokeData { get; private set; }
 
+        public event Action<float>? OnCollisionOccurred;
+        public event Action<float>? OnCushionHit;
+        public event Action? OnBallPocketed;
+
         public System.Drawing.RectangleF GetPlayfieldBounds()
         {
             return new System.Drawing.RectangleF(210f, 210f, 790f - 210f, 590f - 210f);
@@ -171,6 +175,7 @@ namespace BilliardsGame.Physics
                     float distSq = (body.Position - pocket.Position).LengthSquared();
                     if (distSq < pocket.Radius * pocket.Radius)
                     {
+                        OnBallPocketed?.Invoke();
                         CurrentStrokeData.SunkBallsIds.Add(body.Id);
                         if (body is ICircleBody c)
                         {
@@ -247,6 +252,7 @@ namespace BilliardsGame.Physics
                 float j = -(1f + e) * vn / (invMassA + invMassB);
                 Vector2 impulse = j * n;
 
+                OnCollisionOccurred?.Invoke(Math.Abs(j));
                 bodyA.ApplyImpulse(impulse);
                 bodyB.ApplyImpulse(-impulse);
                 
@@ -307,6 +313,7 @@ namespace BilliardsGame.Physics
                     float j = -(1f + e) * vn * ball.Mass;
                     
                     Vector2 impulse = j * n;
+                    OnCushionHit?.Invoke(Math.Abs(j));
                     ball.ApplyImpulse(impulse);
 
                     if (CurrentStrokeData.FirstBallHitId != null)

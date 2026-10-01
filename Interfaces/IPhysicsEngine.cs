@@ -11,6 +11,10 @@ namespace BilliardsGame.Interfaces
     {
         StrokeData CurrentStrokeData { get; }
 
+        event System.Action<float>? OnCollisionOccurred;
+        event System.Action<float>? OnCushionHit;
+        event System.Action? OnBallPocketed;
+
         System.Drawing.RectangleF GetPlayfieldBounds();
 
         void ResetStrokeData();

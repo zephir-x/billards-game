@@ -61,6 +61,8 @@ namespace BilliardsGame.Core
             }
         }
 
+        public event Action<float>? OnCueHit;
+
         public void ExecuteShot(IPhysicsBody cueBall)
         {
             if (IsOverheated) return;
@@ -68,7 +70,8 @@ namespace BilliardsGame.Core
             if (Power > 0f && cueBall != null && CueDirection != Vector2.Zero)
             {
                 Vector2 impulse = CueDirection * (Power * BaseForce);
-                cueBall.ApplyImpulse(impulse);
+                OnCueHit?.Invoke(Power);
+                  cueBall.ApplyImpulse(impulse);
             }
             Power = 0.0f;
         }
