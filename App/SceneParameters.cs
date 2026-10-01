@@ -22,9 +22,17 @@ namespace BilliardsGame.App
         public IPlayer CurrentTurnPlayer => _gameManager.ActivePlayer;
         public IPlayer? Winner => _gameManager.Winner;
         public IReadOnlyCollection<IPhysicsBody> Bodies => _physicsEngine.GetBodies();
+        public IReadOnlyCollection<IPhysicsBody> GhostBodies => _physicsEngine.GetGhostBodies();
         public IReadOnlyCollection<IPocket> Pockets => _physicsEngine.GetPockets();
         public ICueController CueInfo => _cueController;
         public IPlayer Player1 => _gameManager.Player1;
         public IPlayer Player2 => _gameManager.Player2;
+        
+        public string NotificationMessage => _gameManager.NotificationMessage;
+        public float NotificationTimer => _gameManager.NotificationTimer;
+        public NotificationType NotificationType => _gameManager.NotificationType;
+        
+        public IPocket? TargetPocket => _gameManager.TargetPocket;
+        public bool IsValidCueBallPlacement(System.Numerics.Vector2 position) => _gameManager.IsValidCueBallPlacement(position);
     }
 }

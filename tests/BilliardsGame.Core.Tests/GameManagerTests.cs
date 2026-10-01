@@ -52,7 +52,7 @@ namespace BilliardsGame.Core.Tests
                 .Returns(new List<IPhysicsBody> { blackBallMock.Object })
                 .Returns(new List<IPhysicsBody> { blackBallMock.Object });
 
-            inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(true);
+            inputMock.SetupGet(i => i.WasLeftMousePressed).Returns(true);
             gameManager.UpdateLogic(0.016f); // To ChargingShot
             inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(false);
             gameManager.UpdateLogic(0.016f); // To SimulatingBalls
@@ -98,7 +98,7 @@ namespace BilliardsGame.Core.Tests
             var gameManager = new GameManager(physicsMock.Object, cueMock.Object, inputMock.Object);
             gameManager.StartGame();
             inputMock.SetupGet(i => i.WasLeftMouseReleased).Returns(true);
-            inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(true);
+            inputMock.SetupGet(i => i.WasLeftMousePressed).Returns(true);
             gameManager.UpdateLogic(0.016f); // To ChargingShot
             inputMock.SetupGet(i => i.IsLeftMouseDown).Returns(false);
             gameManager.UpdateLogic(0.016f); // To SimulatingBalls

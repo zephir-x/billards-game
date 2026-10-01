@@ -18,8 +18,60 @@ namespace BilliardsGame.App
             Raylib.InitWindow(1600, 900, "2D Billiards Game");
             Raylib.SetTargetFPS(144); 
             Raylib.SetExitKey(KeyboardKey.Null);
-            
+
+            // Draw frame to banish the Windows default white background instantly
+            Raylib.BeginDrawing();
+            Raylib.ClearBackground(new Color(5, 5, 12, 255));
+            Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
+            int wTextInit = Raylib.MeasureText("Initializing Engine...", 36);
+            Raylib.DrawText("Initializing Engine...", 1600 / 2 - wTextInit / 2, 900 / 2 - 80, 36, Color.RayWhite);
+            Raylib.EndDrawing();
+
+            var audioManager = new AudioManager();
+            audioManager.Initialize();
+
+            Action[] loadSteps = new Action[]
+            {
+                () => audioManager.LoadBGM("menu", "Audio/BGM/bgm_menu.mp3"),
+                () => audioManager.LoadBGM("gameplay", "Audio/BGM/bgm_gameplay.mp3"),
+                () => audioManager.LoadSFX("collision", "Audio/SFX/sfx_collision.mp3"),
+                () => audioManager.LoadSFX("cushion", "Audio/SFX/sfx_cushion.mp3"),
+                () => audioManager.LoadSFX("pocket", "Audio/SFX/sfx_pocket.mp3"),
+                () => audioManager.LoadSFX("cue_hit", "Audio/SFX/sfx_cue_hit.mp3"),
+                () => audioManager.LoadSFX("game_over", "Audio/SFX/sfx_game_over.mp3"),
+                () => audioManager.LoadSFX("ui_click", "Audio/SFX/sfx_ui_click.mp3"),
+                () => audioManager.LoadSFX("foul", "Audio/SFX/sfx_faul.mp3"),
+                () => audioManager.LoadSFX("announcement", "Audio/SFX/sfx_announcement.mp3")
+            };
+
+            for (int i = 0; i < loadSteps.Length; i++)
+            {
+                // Render spinning loading screen
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground(new Color(5, 5, 12, 255));
+                Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
+                
+                string txt = "Loading Resources";
+                int fSize = 36;
+                int wText = Raylib.MeasureText(txt, fSize);
+                
+                Raylib.DrawText(txt, 1600 / 2 - wText / 2, 900 / 2 - 80, fSize, Color.RayWhite);
+                
+                float t = (float)Raylib.GetTime() * 360f;
+                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t, t + 100f, 32, Color.Gold);
+                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t + 180f, t + 280f, 32, Color.Gold);
+                
+                Raylib.EndDrawing();
+
+                // Load one step
+                loadSteps[i].Invoke();
+            }
+
+            audioManager.PlayBGM("menu", 0.6f);
             var physicsEngine = new PhysicsEngine(1.2f, 8.0f);
+            physicsEngine.OnCollisionOccurred += audioManager.PlayCollision;
+            physicsEngine.OnCushionHit += audioManager.PlayCushionHit;
+            physicsEngine.OnBallPocketed += audioManager.PlayPocketed;
 
             
             // Table Main Cushions
@@ -104,34 +156,42 @@ namespace BilliardsGame.App
 
             var inputProvider = new RaylibInputProvider();
             var cueController = new CueController();
+            cueController.OnCueHit += audioManager.PlayCueHit;
             var gameManager = new GameManager(physicsEngine, cueController, inputProvider);
+            gameManager.OnNotificationEvent += (type) => {
+                if (type == BilliardsGame.Interfaces.Enums.NotificationType.Foul) audioManager.PlaySFX("foul", 0.08f);
+                else audioManager.PlaySFX("announcement", 0.08f);
+            };
             gameManager.OnPlaceCueBall += (pos) => 
             {
                 var whiteBall = new Ball(0, pos, 0.15f, 10f, 0.8f, BallType.Cue, 0);
                 physicsEngine.AddBody(whiteBall);
+                audioManager.PlaySFX("collision", 0.7f);
             };
 
+            gameManager.OnGameOver += () => { audioManager.StopBGM("gameplay"); audioManager.PlayGameOver(); audioManager.PlayBGM("menu", 0.6f); };
             var sceneData = new SceneParameters(gameManager, physicsEngine, cueController);
             var renderer = new RaylibRenderer();
             renderer.Initialize(sceneData);
+            renderer.OnButtonHovered = () => audioManager.PlayUIHover();
             
             inputProvider.SetCoordinateMapper((screenPos) => Raylib.GetScreenToWorld2D(screenPos, renderer.MainCamera));
 
             bool isPaused = false;
             bool shouldExit = false;
 
-            renderer.OnPlayClicked = () => {
+            renderer.OnPlayClicked = () => { audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay", 0.4f);
                 inputProvider.ConsumeClickForUI();
                 gameManager.StartGame();
             };
-            renderer.OnExitClicked = () => {
+            renderer.OnExitClicked = () => { audioManager.PlayUIClick();
                 shouldExit = true;
             };
-            renderer.OnContinueClicked = () => {
+            renderer.OnContinueClicked = () => { audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay");
                 inputProvider.ConsumeClickForUI();
                 isPaused = false;
             };
-            renderer.OnRestartClicked = () => {
+            renderer.OnRestartClicked = () => { audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay", 0.4f);
                 inputProvider.ConsumeClickForUI();
                 isPaused = false;
                 setupBalls();
@@ -150,6 +210,8 @@ namespace BilliardsGame.App
                     if (Raylib.IsKeyPressed(KeyboardKey.Escape))
                     {
                         isPaused = !isPaused;
+                        if (isPaused) { audioManager.StopBGM("gameplay"); audioManager.PlayBGM("menu"); }
+                        else { audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay"); }
                     }
                 }
                 else
@@ -174,10 +236,12 @@ namespace BilliardsGame.App
                     }
                 }
 
+                audioManager.Update();
                 float alpha = isPaused ? 0f : (accumulator / dt);
                 renderer.DrawFrame(alpha);
             }
 
+            audioManager.Deinitialize();
             Raylib.CloseWindow();
         }
     }

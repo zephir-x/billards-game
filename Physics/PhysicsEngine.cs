@@ -8,12 +8,10 @@ using System.Numerics;
 
 namespace BilliardsGame.Physics
 {
-    /// <summary>
-    /// Implements the core physics simulation engine for the 2D billiards game.
-    /// </summary>
     public class PhysicsEngine : IPhysicsEngine
     {
         private readonly List<IPhysicsBody> _bodies;
+        private readonly List<IPhysicsBody> _ghostBodies;
         private readonly List<IPocket> _pockets;
         private readonly float _tableFriction;
         private readonly float _sleepVelocityThreshold;
@@ -22,19 +20,19 @@ namespace BilliardsGame.Physics
 
         public StrokeData CurrentStrokeData { get; private set; }
 
+        public event Action<float>? OnCollisionOccurred;
+        public event Action<float>? OnCushionHit;
+        public event Action? OnBallPocketed;
+
         public System.Drawing.RectangleF GetPlayfieldBounds()
         {
             return new System.Drawing.RectangleF(210f, 210f, 790f - 210f, 590f - 210f);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PhysicsEngine"/> class.
-        /// </summary>
-        /// <param name="tableFriction">The friction coefficient of the table cloth.</param>
-        /// <param name="sleepVelocityThreshold">The velocity threshold below which a body is put to sleep (velocity set to zero).</param>
         public PhysicsEngine(float tableFriction = 0.25f, float sleepVelocityThreshold = 0.001f)
         {
             _bodies = new List<IPhysicsBody>();
+            _ghostBodies = new List<IPhysicsBody>();
             _pockets = new List<IPocket>();
             _tableFriction = tableFriction;
             _sleepVelocityThreshold = sleepVelocityThreshold;
@@ -46,7 +44,6 @@ namespace BilliardsGame.Physics
             CurrentStrokeData = new StrokeData { SunkBallsIds = new List<int>() };
         }
 
-        /// <inheritdoc />
         public void AddBody(IPhysicsBody body)
         {
             if (body == null) throw new ArgumentNullException(nameof(body));
@@ -56,20 +53,22 @@ namespace BilliardsGame.Physics
             }
         }
 
-        /// <inheritdoc />
         public void RemoveBody(IPhysicsBody body)
         {
             if (body == null) throw new ArgumentNullException(nameof(body));
             _bodies.Remove(body);
         }
 
-        /// <inheritdoc />
         public IReadOnlyCollection<IPhysicsBody> GetBodies()
         {
             return _bodies.AsReadOnly();
         }
+        
+        public IReadOnlyCollection<IPhysicsBody> GetGhostBodies()
+        {
+            return _ghostBodies.AsReadOnly();
+        }
 
-        /// <inheritdoc />
         public void AddPocket(IPocket pocket)
         {
             if (pocket == null) throw new ArgumentNullException(nameof(pocket));
@@ -79,13 +78,11 @@ namespace BilliardsGame.Physics
             }
         }
 
-        /// <inheritdoc />
         public IReadOnlyCollection<IPocket> GetPockets()
         {
             return _pockets.AsReadOnly();
         }
 
-        /// <inheritdoc />
         public bool AreAllBodiesAtRest(float sleepVelocityThreshold = 0.001f)
         {
             float sqrThreshold = sleepVelocityThreshold * sleepVelocityThreshold;
@@ -99,18 +96,15 @@ namespace BilliardsGame.Physics
             return true;
         }
 
-        /// <inheritdoc />
         public void Step(float fixedDeltaTime)
         {
             if (fixedDeltaTime <= 0f) return;
 
-            // 1. Save previous positions (for rendering interpolation)
             foreach (var body in _bodies)
             {
                 body.PreviousPosition = body.Position;
             }
 
-            // 2. Update velocities and apply friction (Drag)
             float frictionFactor = Math.Max(0f, 1f - _tableFriction * fixedDeltaTime);
             foreach (var body in _bodies)
             {
@@ -118,28 +112,59 @@ namespace BilliardsGame.Physics
 
                 body.Velocity *= frictionFactor;
 
-                // If velocity drops below the rest threshold, zero it out
                 if (body.Velocity.LengthSquared() < _sleepVelocityThreshold * _sleepVelocityThreshold)
                 {
                     body.Velocity = Vector2.Zero;
                 }
             }
 
-            // 3. Update positions (Backward Euler Integration)
             foreach (var body in _bodies)
             {
                 if (body.IsStatic) continue;
 
                 body.Position += body.Velocity * fixedDeltaTime;
+                
+                if (body is ICircleBody circle)
+                {
+                    circle.RotationAngle += ((body.Velocity.X + body.Velocity.Y) / circle.Radius) * fixedDeltaTime;
+                }
+            }
+            
+            for (int i = _ghostBodies.Count - 1; i >= 0; i--)
+            {
+                if (_ghostBodies[i] is ICircleBody gb)
+                {
+                    gb.GhostLifeTime -= fixedDeltaTime * 2.5f;
+                    
+                    IPocket? closestPocket = null;
+                    float minDistSq = float.MaxValue;
+                    foreach(var p in _pockets) {
+                       float dSq = (p.Position - gb.Position).LengthSquared();
+                       if (dSq < minDistSq) { minDistSq = dSq; closestPocket = p; }
+                    }
+                    
+                    if (closestPocket != null) {
+                       Vector2 toCenter = closestPocket.Position - gb.Position;
+                       gb.Velocity += toCenter * 20f * fixedDeltaTime;
+                       gb.Velocity *= Math.Max(0f, 1f - 4f * fixedDeltaTime);
+                    }
+                    
+                    gb.PreviousPosition = gb.Position;
+                    gb.Position += gb.Velocity * fixedDeltaTime;
+                    gb.RotationAngle += ((gb.Velocity.X + gb.Velocity.Y) / gb.Radius) * fixedDeltaTime;
+
+                    if (gb.GhostLifeTime <= 0f)
+                    {
+                        _ghostBodies.RemoveAt(i);
+                    }
+                }
             }
 
-            // 4. Collision Detection and Resolution Phase
             for (int i = 0; i < CollisionIterations; i++)
             {
                 ResolveCollisions();
             }
 
-            // 5. Pocket Detection
             for (int i = _bodies.Count - 1; i >= 0; i--)
             {
                 var body = _bodies[i];
@@ -150,7 +175,15 @@ namespace BilliardsGame.Physics
                     float distSq = (body.Position - pocket.Position).LengthSquared();
                     if (distSq < pocket.Radius * pocket.Radius)
                     {
+                        OnBallPocketed?.Invoke();
                         CurrentStrokeData.SunkBallsIds.Add(body.Id);
+                        CurrentStrokeData.SunkBallsToPockets[body.Id] = pocket;
+                        if (body is ICircleBody c)
+                        {
+                            c.IsGhost = true;
+                            c.Velocity *= 0.02f; // Completely crush the momentum! Takes away 98% of its velocity.
+                            _ghostBodies.Add(c);
+                        }
                         _bodies.RemoveAt(i);
                         break;
                     }
@@ -220,6 +253,7 @@ namespace BilliardsGame.Physics
                 float j = -(1f + e) * vn / (invMassA + invMassB);
                 Vector2 impulse = j * n;
 
+                OnCollisionOccurred?.Invoke(Math.Abs(j));
                 bodyA.ApplyImpulse(impulse);
                 bodyB.ApplyImpulse(-impulse);
                 
@@ -280,6 +314,7 @@ namespace BilliardsGame.Physics
                     float j = -(1f + e) * vn * ball.Mass;
                     
                     Vector2 impulse = j * n;
+                    OnCushionHit?.Invoke(Math.Abs(j));
                     ball.ApplyImpulse(impulse);
 
                     if (CurrentStrokeData.FirstBallHitId != null)

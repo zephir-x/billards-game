@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 
 namespace BilliardsGame.Interfaces
 {
@@ -12,6 +12,7 @@ namespace BilliardsGame.Interfaces
         void ChargeShot(float deltaTime);
         void ResetCharge();
         void ExecuteShot(IPhysicsBody cueBall);
+        event System.Action<float>? OnCueHit;
         void UpdateOverheat(float deltaTime);
     }
 }

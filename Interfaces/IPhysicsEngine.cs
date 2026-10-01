@@ -11,6 +11,10 @@ namespace BilliardsGame.Interfaces
     {
         StrokeData CurrentStrokeData { get; }
 
+        event System.Action<float>? OnCollisionOccurred;
+        event System.Action<float>? OnCushionHit;
+        event System.Action? OnBallPocketed;
+
         System.Drawing.RectangleF GetPlayfieldBounds();
 
         void ResetStrokeData();
@@ -38,6 +42,11 @@ namespace BilliardsGame.Interfaces
         /// </summary>
         /// <returns>A read-only collection of physics bodies.</returns>
         IReadOnlyCollection<IPhysicsBody> GetBodies();
+
+        /// <summary>
+        /// Returns all dying/ghost physics bodies currently fading out.
+        /// </summary>
+        IReadOnlyCollection<IPhysicsBody> GetGhostBodies();
 
         /// <summary>
         /// Adds a pocket to the simulation to trap balls.

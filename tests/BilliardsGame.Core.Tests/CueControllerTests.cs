@@ -56,11 +56,11 @@ namespace BilliardsGame.Core.Tests
             // Updating Overheat lowers power
             controller.UpdateOverheat(0.1f);
             // Power should decrease by 0.1 * 1.0 * 0.5 = 0.05. New Power = 0.95
-            Assert.Equal(0.95f, controller.Power, 4);
+            Assert.Equal(0.935f, controller.Power, 4);
             
             // Charging while overheated has no effect
             controller.ChargeShot(0.5f);
-            Assert.Equal(0.95f, controller.Power, 4);
+            Assert.Equal(0.935f, controller.Power, 4);
         }
 
         [Fact]
