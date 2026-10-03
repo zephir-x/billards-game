@@ -1,12 +1,11 @@
-using BilliardsGame.Interfaces;
-using BilliardsGame.Interfaces.Enums;
-using BilliardsGame.Interfaces.Models;
+﻿using BilliardsGame.Interfaces;
 using System.Numerics;
 
 namespace BilliardsGame.Physics
 {
     /// <summary>
-    /// Represents a static boundary or cushion of the billiard table.
+    /// Represents a static linear barricade constraining boundaries on the billiard table.
+    /// Used actively to violently reverse trajectory momentum on interaction.
     /// </summary>
     public class Cushion : ISegmentBody
     {
@@ -41,12 +40,12 @@ namespace BilliardsGame.Physics
         public Vector2 Normal { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cushion"/> class.
+        /// Initializes a new instance of the <see cref=""Cushion""/> class defining absolute table limits.
         /// </summary>
-        /// <param name="id">Unique identifier for the cushion.</param>
-        /// <param name="startPoint">Start coordinates of the segment.</param>
-        /// <param name="endPoint">End coordinates of the segment.</param>
-        /// <param name="restitution">Coefficient of restitution for bouncing [0.0, 1.0].</param>
+        /// <param name=""id"">Unique identifier for the cushion.</param>
+        /// <param name=""startPoint"">Absolute metric origin point of the segment.</param>
+        /// <param name=""endPoint"">Absolute metric termination point of the segment.</param>
+        /// <param name=""restitution"">Kinetic bounciness value indicating energy retention [0.0, 1.0].</param>
         public Cushion(int id, Vector2 startPoint, Vector2 endPoint, float restitution = 0.8f)
         {
             Id = id;
@@ -73,12 +72,12 @@ namespace BilliardsGame.Physics
         }
 
         /// <summary>
-        /// Static bodies are immune to impulses; this method performs no operation.
+        /// Explicit exception for static bodies enforcing immunity to kinetic impulse mutations.
         /// </summary>
-        /// <param name="impulse">The impulse vector (ignored).</param>
+        /// <param name=""impulse"">The impulse vector (discarded context).</param>
         public void ApplyImpulse(Vector2 impulse)
         {
-            // No-op for static bodies
+            // No-op for absolutely static bodies
         }
     }
 }

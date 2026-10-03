@@ -1,23 +1,39 @@
-using System;
+﻿using System;
 using System.Numerics;
 using BilliardsGame.Interfaces;
-using BilliardsGame.Interfaces.Enums;
-using BilliardsGame.Interfaces.Models;
 
 namespace BilliardsGame.Core
 {
+    /// <summary>
+    /// Interactive domain controller responsible for evaluating physical peripheral telemetry (mouse cursors), 
+    /// orchestrating vector arithmetic to target valid shot trajectories, and dynamically accumulating kinetic energy mapping to physical impacts.
+    /// </summary>
     public class CueController : ICueController
     {
+        /// <inheritdoc />
         public float Power { get; private set; }
+
+        /// <inheritdoc />
         public Vector2 CueDirection { get; private set; }
+
+        /// <inheritdoc />
         public bool IsOverheated { get; private set; }
 
-        private const float PowerChargeRate = 1.0f; // e.g., 1 unit per second
+        // Defines the fixed time accumulation scalar governing how quickly the player reaches maximum striking force.
+        private const float PowerChargeRate = 1.0f;
+
+        // Represents the absolute top-end kinetic impulse multiplier translated directly into velocity bounds within the Physics Engine.
         private const float BaseForce = 500f; 
 
+        /// <inheritdoc />
+        public event Action<float>? OnCueHit;
+
+        /// <inheritdoc />
         public void UpdateAim(Vector2 cueBallPosition, Vector2 mousePosition)
         {
             var diff = cueBallPosition - mousePosition;
+
+            // Epsilon check limits division-by-zero artifacts eliminating jitter when intersecting direct coordinates.
             if (diff.LengthSquared() > 0.0001f)
             {
                 CueDirection = Vector2.Normalize(diff);
@@ -28,11 +44,16 @@ namespace BilliardsGame.Core
             }
         }
 
+        /// <inheritdoc />
         public void ChargeShot(float deltaTime)
         {
+            // Block power modifications strictly if the cue has exceeded safe kinetic thresholds.
             if (IsOverheated) return;
 
+            // Continually increment linear potential energy bounded towards the explicit 100% threshold limit.
             Power += deltaTime * PowerChargeRate;
+
+            // Instantly transition local context into an exhausted penalty phase restricting strike actions.
             if (Power >= 1.0f)
             {
                 Power = 1.0f;
@@ -40,11 +61,15 @@ namespace BilliardsGame.Core
             }
         }
 
+        /// <inheritdoc />
         public void UpdateOverheat(float deltaTime)
         {
             if (IsOverheated)
             {
-                Power -= deltaTime * PowerChargeRate * 0.65f; // slower cool down like syrup, increased by 30%
+                // Penalize fault consequences by actively forcing the UI decay loop to retract 35% slower than standard charging.
+                Power -= deltaTime * PowerChargeRate * 0.65f; 
+                
+                // Allow safe recovery and release lock states completely.
                 if (Power <= 0f)
                 {
                     Power = 0f;
@@ -53,6 +78,7 @@ namespace BilliardsGame.Core
             }
         }
 
+        /// <inheritdoc />
         public void ResetCharge()
         {
             if (!IsOverheated)
@@ -61,18 +87,26 @@ namespace BilliardsGame.Core
             }
         }
 
-        public event Action<float>? OnCueHit;
-
+        /// <inheritdoc />
         public void ExecuteShot(IPhysicsBody cueBall)
         {
+            // Fully block execution if penalty flags are active.
             if (IsOverheated) return;
 
+            // Validate constraints asserting kinetic payloads resolve upon actual vectors and valid engine objects.
             if (Power > 0f && cueBall != null && CueDirection != Vector2.Zero)
             {
+                // Translate accumulated contextual multipliers directly into simulated integrated force constraints.
                 Vector2 impulse = CueDirection * (Power * BaseForce);
+                
+                // Pass metric intensity into boundary event listeners serving Audio SFX pipelines.
                 OnCueHit?.Invoke(Power);
-                  cueBall.ApplyImpulse(impulse);
+                
+                // Inject mechanical stress to the target interface.
+                cueBall.ApplyImpulse(impulse);
             }
+            
+            // Obliterate active potentials to completely normalize states following a legal stroke.
             Power = 0.0f;
         }
     }

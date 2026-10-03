@@ -1,4 +1,4 @@
-using BilliardsGame.Interfaces.Enums;
+﻿using BilliardsGame.Interfaces.Enums;
 using BilliardsGame.Interfaces.Models;
 using System;
 using System.Numerics;
@@ -7,22 +7,43 @@ using Raylib_cs;
 
 namespace BilliardsGame.App
 {
+    /// <summary>
+    /// Master visualization mapping component interfacing exclusively with Raylib primitives.
+    /// Operates completely disconnected from physical integrations relying solely on structural snapshots passed from the Scene layer.
+    /// Decoupled design prevents any UI actions from leaking directly into or modifying the domain models.
+    /// </summary>
     public class RaylibRenderer : IRenderer
     {
         private ISceneParameters? _sceneData;
 
+        /// <inheritdoc />
         public bool IsPaused { get; set; }
+        
+        /// <summary>
+        /// Internal global translation offset manipulating all 2D vector outputs ensuring scaling and panning operate seamlessly across various internal screen resolutions.
+        /// </summary>
         public Camera2D MainCamera { get; private set; }
         
+        /// <inheritdoc />
         public Action? OnPlayClicked { get; set; }
+        
+        /// <inheritdoc />
         public Action? OnExitClicked { get; set; }
         
+        /// <inheritdoc />
         public Action? OnContinueClicked { get; set; }
+        
+        /// <inheritdoc />
         public Action? OnRestartClicked { get; set; }
 
+        /// <summary>
+        /// Local explicit trigger hooking audio playback loops strictly isolating the domain UI bindings out of the rendering arrays.
+        /// </summary>
         public Action? OnButtonHovered { get; set; }
+        
         private string _lastHoveredId = "none";
         
+        // Easing interpolation tracking values mapping menu slide-in transitions.
         private float _menuXOffset = 1600f;
         private float _pauseXOffset = -1600f;
         private float _gameOverXOffset = 1600f;
@@ -31,6 +52,7 @@ namespace BilliardsGame.App
         private bool _wasShowPause;
         private bool _wasShowGameOver;
 
+        // Specialized interpolator bypassing Math functions to guarantee Raylib specific vector handling clamps.
         private float Lerp(float start, float end, float amount)
         {
             if (amount > 1f) amount = 1f;
@@ -38,6 +60,7 @@ namespace BilliardsGame.App
             return start + (end - start) * amount;
         }
 
+        /// <inheritdoc />
         public void Initialize(ISceneParameters sceneData)
         {
             _sceneData = sceneData;
@@ -64,13 +87,17 @@ namespace BilliardsGame.App
             return Color.RayWhite;
         }
 
+        /// <inheritdoc />
         public void DrawFrame(float interpolationAlpha)
         {
+            // Execute hardware lock opening rendering buffer.
             Raylib.BeginDrawing();
             
             float dt = Raylib.GetFrameTime();
-            if (dt > 0.033f) dt = 0.033f; // Cap animation jump for long init frames (30 FPS max jump)
+            // Restrict catastrophic jump potentials resolving long background executions by locking maximum visual skips.
+            if (dt > 0.033f) dt = 0.033f; 
             
+            // Map state logic to UI components driving transition evaluations.
             if (_sceneData != null)
             {
                 bool showMenu = (_sceneData.CurrentState == GameState.Menu);
@@ -96,15 +123,15 @@ namespace BilliardsGame.App
 
             Raylib.BeginMode2D(MainCamera);
 
-            // 1. Outer Dark Wood Base
+            // Layer 1. Outer Dark Wood Base Structure
             Rectangle outerWood = new Rectangle(140, 140, 720, 520);
             Raylib.DrawRectangleRounded(outerWood, 0.15f, 30, new Color(60, 30, 10, 255));
 
-            // 2. Inner Green Cloth
+            // Layer 2. Inner Green Cloth Definition
             Rectangle cloth = new Rectangle(180, 180, 640, 440);
             Raylib.DrawRectangleRounded(cloth, 0.05f, 10, new Color(20, 105, 50, 255));
 
-            // 3. Pocket Holes (drawn on the cloth directly)
+            // Layer 3. Pocket Holes dynamically iterating active physics sinks targeting holes spanning through the table mesh.
             if (_sceneData?.Pockets != null)
             {
                 foreach (var pocket in _sceneData.Pockets)
@@ -116,89 +143,14 @@ namespace BilliardsGame.App
                 }
             }
 
-            // Centralized helper to draw balls
-            Action<ICircleBody, Vector2, int> DrawBall = (circleBody, renderedPos, alpha) =>
-            {
-                Color ballColor = Color.White;
-                int n = circleBody.Number;
-                
-                if (circleBody.BallType == BallType.Cue) 
-                {
-                    ballColor = new Color(255, 255, 255, alpha);
-                }
-                else if (circleBody.BallType == BallType.Black)
-                {
-                    ballColor = new Color(20, 20, 20, alpha);
-                }
-                else
-                {
-                    int colorIndex = n > 8 ? n - 8 : n;
-                    var baseColor = colorIndex switch 
-                    {
-                        1 => new Color(255, 215, 0, 255),
-                        2 => new Color(0, 0, 255, 255),
-                        3 => new Color(255, 0, 0, 255),
-                        4 => new Color(128, 0, 128, 255),
-                        5 => new Color(255, 140, 0, 255),
-                        6 => new Color(0, 128, 0, 255),
-                        7 => new Color(128, 0, 0, 255),
-                        _ => Color.White
-                    };
-                    ballColor = new Color(baseColor.R, baseColor.G, baseColor.B, alpha);
-                }
-
-                Color rayWhiteAlpha = new Color(245, 245, 245, alpha);
-                float rotPhase = circleBody.RotationAngle;
-                float rotPhaseDeg = rotPhase * (180f / MathF.PI);
-                
-                if (circleBody.BallType == BallType.Cue)
-                {
-                    Raylib.DrawCircleV(renderedPos, circleBody.Radius, rayWhiteAlpha);
-                }
-                else if (circleBody.BallType == BallType.Solid || circleBody.BallType == BallType.Black)
-                {
-                    Raylib.DrawCircleV(renderedPos, circleBody.Radius, ballColor);
-                    Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, rayWhiteAlpha);
-                }
-                else if (circleBody.BallType == BallType.Striped)
-                {
-                    Raylib.DrawCircleV(renderedPos, circleBody.Radius, rayWhiteAlpha);
-                    
-                    float cosA = MathF.Cos(rotPhase);
-                    float sinA = MathF.Sin(rotPhase);
-                    Func<float, float, Vector2> rotateLocal = (lx, ly) => 
-                        new Vector2(renderedPos.X + lx * cosA - ly * sinA, renderedPos.Y + lx * sinA + ly * cosA);
-                    
-                    float stripeHalf = circleBody.Radius * 0.65f;
-                    for (float dy = -stripeHalf; dy <= stripeHalf; dy += 0.5f)
-                    {
-                        float chordX = MathF.Sqrt(circleBody.Radius * circleBody.Radius - dy * dy);
-                        Vector2 p1 = rotateLocal(-chordX, dy);
-                        Vector2 p2 = rotateLocal(chordX, dy);
-                        Raylib.DrawLineEx(p1, p2, 1f, ballColor);
-                    }
-                    Raylib.DrawCircleV(renderedPos, circleBody.Radius * 0.55f, rayWhiteAlpha);
-                }
-                
-                if (circleBody.BallType != BallType.Cue)
-                {
-                    string numStr = n.ToString();
-                    Font font = Raylib.GetFontDefault();
-                    float fontSize = 9f;
-                    float spacing = 1.0f;
-                    Vector2 textSize = Raylib.MeasureTextEx(font, numStr, fontSize, spacing);
-                    Vector2 origin = new Vector2(textSize.X / 2f, textSize.Y / 2f);
-                    
-                    Raylib.DrawTextPro(font, numStr, renderedPos, origin, rotPhaseDeg, fontSize, spacing, new Color(0, 0, 0, alpha));
-                }
-            };
-
+            // Process fading ghosts applying isolated life logic independent of main physics iteration.
             if (_sceneData?.GhostBodies != null)
             {
                 foreach (var body in _sceneData.GhostBodies)
                 {
                     if (body is ICircleBody circleBody)
                     {
+                        // Lerp coordinates based strictly on rendering boundaries avoiding simulation jitter.
                         Vector2 renderedPos = (body.PreviousPosition * (1f - interpolationAlpha)) + (body.Position * interpolationAlpha);
                         float alphaFraction = Math.Clamp(circleBody.GhostLifeTime / 1.5f, 0f, 1f);
                         DrawBall(circleBody, renderedPos, (int)(255 * alphaFraction));
@@ -218,7 +170,7 @@ namespace BilliardsGame.App
                 }
             }
 
-            // 5. Draw table rails
+            // Layer 5. Assemble exact geometric buffers matching the underlying Physics cushion borders mapping exact angles.
             Color railColor = new Color(139, 69, 19, 255);
             Color railBorder = new Color(60, 30, 10, 255);
             
@@ -260,7 +212,7 @@ namespace BilliardsGame.App
             DrawQuad(new Vector2(800, 232.5f), new Vector2(800, 567.5f), new Vector2(820, 587.5f), new Vector2(820, 212.5f), railColor);
             DrawQuadLines(new Vector2(800, 232.5f), new Vector2(800, 567.5f), new Vector2(820, 587.5f), new Vector2(820, 212.5f), 3f, railBorder);
 
-            // Blinking Pockets in CallingPocket state
+            // Execute visual pulse indicators focusing player trajectory logic toward critical 8-Ball destinations.
             if (_sceneData?.CurrentState == GameState.CallingPocket)
             {
                 float t = (float)Raylib.GetTime();
@@ -277,13 +229,13 @@ namespace BilliardsGame.App
                 }
             }
 
-            // Draw target pocket selection indicator
+            // Expose the final targeted binding acknowledging user confirmation explicitly.
             if (_sceneData?.TargetPocket != null && _sceneData.CurrentState == GameState.PlayerTurn)
             {
                 Raylib.DrawCircleLines((int)_sceneData.TargetPocket.Position.X, (int)_sceneData.TargetPocket.Position.Y, 26f, new Color(255, 215, 0, 150));
             }
 
-            // Ball Placement cursor
+            // Map manual spawn controls directly linking cursor validations securely isolated inside the Rule definitions checking boundary collision arrays.
             if (_sceneData?.CurrentState == GameState.BallInHand)
             {
                 Vector2 mouseWorld = Raylib.GetScreenToWorld2D(Raylib.GetMousePosition(), MainCamera);
@@ -293,7 +245,7 @@ namespace BilliardsGame.App
                 Raylib.DrawCircleV(mouseWorld, 10f, placementColor);
             }
 
-            // Draw Cue
+            // Interface visualizing exact physical strike sequences based on accumulated kinematic telemetry.
             if (_sceneData != null && (_sceneData.CurrentState == GameState.ChargingShot || _sceneData.CurrentState == GameState.PlayerTurn))
             {
                 var cueBall = GetCueBall();
@@ -304,6 +256,7 @@ namespace BilliardsGame.App
                     Vector2 cueDir = _sceneData.CueInfo.CueDirection;
                     if (cueDir != Vector2.Zero)
                     {
+                        // Draw Aim Assist path
                         float baseSpacing = 15f;
                         float dynamicSpacing = baseSpacing + (_sceneData.CueInfo.Power * 15f);
                         for (int i = 0; i < 7; i++)
@@ -313,6 +266,7 @@ namespace BilliardsGame.App
                             Raylib.DrawCircleV(ghostPoint, 2f, new Color(255, 255, 255, 120));
                         }
 
+                        // Draw Physical Cue Body matching backward retraction paths proportional to accumulated forces.
                         float cueLength = 300f;
                         Vector2 cueStart = cueBallRenderedPos - (cueDir * offset);
                         Vector2 cueEnd = cueBallRenderedPos - (cueDir * (offset + cueLength));
@@ -333,7 +287,7 @@ namespace BilliardsGame.App
             }
             Raylib.EndMode2D();
 
-            // UI
+            // Screen space UI Overlay
             if (_sceneData != null)
             {
                 if (_sceneData.CurrentState != GameState.Menu && _sceneData.CurrentState != GameState.GameOver)
@@ -342,7 +296,7 @@ namespace BilliardsGame.App
                     int turnTextWidth = Raylib.MeasureText(turnText, 36); 
                     Raylib.DrawText(turnText, 1600 / 2 - turnTextWidth / 2, 20, 36, Color.RayWhite);
 
-                    // Notification Fading & Typography
+                    // Execute robust notification typologies scaling textual values smoothly mapped against logic timers.
                     if (!string.IsNullOrEmpty(_sceneData.NotificationMessage) && _sceneData.NotificationTimer > 0f)
                     {
                         Font fn = Raylib.GetFontDefault();
@@ -352,7 +306,6 @@ namespace BilliardsGame.App
                         float currentTimer = _sceneData.NotificationTimer;
                         float alphaFraction = 1f;
 
-                        // 3 seconds is max timer
                         if (currentTimer < 0.5f) { alphaFraction = currentTimer / 0.5f; }
                         else if (3f - currentTimer < 0.5f) { alphaFraction = (3f - currentTimer) / 0.5f; }
                         
@@ -371,6 +324,7 @@ namespace BilliardsGame.App
                         Raylib.DrawTextPro(fn, _sceneData.NotificationMessage, pos, origin, 0f, fSize, 1f, drawColor);
                     }
 
+                    // Explicitly draw bounded scoring tables indexing player conditions derived directly out of abstract mappings.
                     var p1 = _sceneData.Player1;
                     var p2 = _sceneData.Player2;
                     string p1Type = p1?.AssignedType != null ? p1.AssignedType.ToString()! : "None";
@@ -403,6 +357,7 @@ namespace BilliardsGame.App
                     Raylib.DrawText($"Type: {p2Type}", p2X + boxW/2 - Raylib.MeasureText($"Type: {p2Type}", valSize)/2, p2Y + 55, valSize, Color.LightGray);
                     Raylib.DrawText($"Pocketed: {p2Pocketed}/7", p2X + boxW/2 - Raylib.MeasureText($"Pocketed: {p2Pocketed}/7", valSize)/2, p2Y + 90, valSize, p2ScoreColor);
 
+                    // Dynamic Power bar overlay matching cue states natively reflecting valid/broken overheat mechanics.
                     if (_sceneData.CueInfo != null)
                     {
                         int barWidth = 600; int barHeight = 24;
@@ -448,10 +403,9 @@ namespace BilliardsGame.App
 
             if (isHoverED)
             {
-                // Simple generic line thickness wasn't standardized, we'll draw 2 rounded slightly bigger
                 Rectangle outline = new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4);
                 Raylib.DrawRectangleRounded(outline, 0.4f, 16, new Color(255, 190, 20, 200));
-                Raylib.DrawRectangleRounded(rect, 0.4f, 16, baseColor); // Redraw base to cover inside
+                Raylib.DrawRectangleRounded(rect, 0.4f, 16, baseColor); 
             }
 
             int fontSize = 32;
@@ -476,7 +430,6 @@ namespace BilliardsGame.App
             int titleW = Raylib.MeasureText("2D Billiards", 100);
             Raylib.DrawText("2D Billiards", (int)offsetX + screenW / 2 - titleW / 2, 200, 100, Color.RayWhite);
             
-            // Add a little subtitle
             Raylib.DrawText("Zephir Edition", (int)offsetX + screenW / 2 - Raylib.MeasureText("Zephir Edition", 30) / 2, 310, 30, Color.Gold);
 
             Rectangle playRect = new Rectangle(startX, startY, btnWidth, btnHeight);
@@ -493,7 +446,8 @@ namespace BilliardsGame.App
 
             if (playHover && isClick) OnPlayClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();
-        }        private void DrawPauseMenu(float offsetX)
+        }        
+		private void DrawPauseMenu(float offsetX)
         {
             int screenW = 1600; int screenH = 900;
             Raylib.DrawRectangle(0, 0, screenW, screenH, new Color(0, 0, 0, (int)Math.Clamp(210 * (1f - Math.Abs(offsetX)/1600f), 0, 255)));
@@ -562,11 +516,14 @@ namespace BilliardsGame.App
             if (restartHover && isClick) OnRestartClicked?.Invoke();
             if (exitHover && isClick) OnExitClicked?.Invoke();
         }
+        
+        // Internal loop helpers isolated below the scope definitions keeping DrawFrame clean.
         private ICircleBody? GetCueBall()
         {
             if (_sceneData?.Bodies == null) return null;
             return (ICircleBody?)System.Linq.Enumerable.FirstOrDefault(_sceneData.Bodies, b => b is ICircleBody cb && cb.BallType == BallType.Cue);
         }
+        
         private void DrawBall(ICircleBody circleBody, Vector2 renderedPos, int alpha)
         {
             Color ballColor = Color.White;
@@ -639,5 +596,6 @@ namespace BilliardsGame.App
                 
                 Raylib.DrawTextPro(font, numStr, renderedPos, origin, rotPhaseDeg, fontSize, spacing, new Color(0, 0, 0, alpha));
             }
-        }}
+        }
+    }
 }

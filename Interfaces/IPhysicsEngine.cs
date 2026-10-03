@@ -1,68 +1,90 @@
 using BilliardsGame.Interfaces.Models;
 using System.Collections.Generic;
-using System.Numerics;
+using System.Drawing;
+using System;
 
 namespace BilliardsGame.Interfaces
 {
     /// <summary>
-    /// Core physics engine interface responsible for deterministic calculations.
+    /// Core simulation constraint engine responsible for highly deterministic kinematics and collision evaluation.
     /// </summary>
     public interface IPhysicsEngine
     {
+        /// <summary>
+        /// Global read-only packet aggregating exact chronological hit and pocket statistics produced over one simulated execution.
+        /// </summary>
         StrokeData CurrentStrokeData { get; }
 
-        event System.Action<float>? OnCollisionOccurred;
-        event System.Action<float>? OnCushionHit;
-        event System.Action? OnBallPocketed;
+        /// <summary>
+        /// Dispatched synchronously when dynamic bodies exchange physical kinetic forces.
+        /// </summary>
+        event Action<float>? OnCollisionOccurred;
 
-        System.Drawing.RectangleF GetPlayfieldBounds();
+        /// <summary>
+        /// Dispatched synchronously when dynamic bodies reflect and impact against static boundary voids.
+        /// </summary>
+        event Action<float>? OnCushionHit;
 
+        /// <summary>
+        /// Dispatched synchronously when dynamic bodies overlap and succumb to designated pocket boundaries.
+        /// </summary>
+        event Action? OnBallPocketed;
+
+        /// <summary>
+        /// Scans geometric cushions mapping an outer envelope threshold defining the legal play area bounds.
+        /// </summary>
+        RectangleF GetPlayfieldBounds();
+
+        /// <summary>
+        /// Explicity flushes current StrokeData aggregations resetting analytical states for the next player execution.
+        /// </summary>
         void ResetStrokeData();
 
         /// <summary>
-        /// Calculates positions, movement, and collisions after a fixed time step.
+        /// Calculates positions, movement trajectories, and enforces collision restrictions across a fixed temporal horizon.
         /// </summary>
-        /// <param name="fixedDeltaTime">The duration of the simulation step in seconds.</param>
+        /// <param name="fixedDeltaTime">The constant duration of the integration step relative to seconds.</param>
         void Step(float fixedDeltaTime);
 
         /// <summary>
-        /// Adds a physical body to the physics simulation.
+        /// Registers a physical body internally into the integration loop pipeline.
         /// </summary>
-        /// <param name="body">The physics body to register.</param>
+        /// <param name="body">The entity to simulate.</param>
         void AddBody(IPhysicsBody body);
 
         /// <summary>
-        /// Removes a physical body from the physics simulation.
+        /// Extracts and detaches a physical body from the internal pipeline.
         /// </summary>
-        /// <param name="body">The physics body to unregister.</param>
+        /// <param name="body">The entity to detach.</param>
         void RemoveBody(IPhysicsBody body);
 
         /// <summary>
-        /// Returns all physics bodies currently registered in the simulation.
+        /// Scans all active interacting entity bodies contained and validated within the loop pipeline.
         /// </summary>
-        /// <returns>A read-only collection of physics bodies.</returns>
+        /// <returns>A read-only iterable snapshot collection of dynamic constraints.</returns>
         IReadOnlyCollection<IPhysicsBody> GetBodies();
 
         /// <summary>
-        /// Returns all dying/ghost physics bodies currently fading out.
+        /// Scans all deactivated non-collidable entity bodies resolving their remaining aesthetic physical drifts.
         /// </summary>
+        /// <returns>A read-only iterable snapshot collection of ghost constraints.</returns>
         IReadOnlyCollection<IPhysicsBody> GetGhostBodies();
 
         /// <summary>
-        /// Adds a pocket to the simulation to trap balls.
+        /// Registers a discrete geometric trap designed to absorb boundaries into ghost sequences.
         /// </summary>
         void AddPocket(IPocket pocket);
 
         /// <summary>
-        /// Returns all pockets.
+        /// Retrieves aggregated geometric limits classifying target destinations.
         /// </summary>
         IReadOnlyCollection<IPocket> GetPockets();
 
         /// <summary>
-        /// Determines whether all bodies in the simulation have essentially stopped moving.
+        /// Scans active linear kinematics across bodies to mathematically determine simulation resolutions.
         /// </summary>
-        /// <param name="sleepVelocityThreshold">The velocity magnitude below which a body is considered at rest.</param>
-        /// <returns><c>true</c> if all bodies are at rest; otherwise, <c>false</c>.</returns>
+        /// <param name="sleepVelocityThreshold">The float magnitude ceiling treating motion outputs as mathematically stagnant.</param>
+        /// <returns><c>true</c> if magnitudes dictate rest state; otherwise, <c>false</c>.</returns>
         bool AreAllBodiesAtRest(float sleepVelocityThreshold = 0.001f);
     }
 }
