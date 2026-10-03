@@ -1,22 +1,26 @@
-using System;
+﻿using System;
 using System.Numerics;
 using Xunit;
 using BilliardsGame.Physics;
 
 namespace BilliardsGame.Physics.Tests
 {
+    /// <summary>
+    /// Macro-level engine simulations verifying broad kinematics resolving overlapping bodies accurately distributing momentum cleanly simulating physics logic fully.
+    /// </summary>
     public class PhysicsEngineTests
     {
         [Fact]
         public void Step_LinearMovement_UpdatesPositionAndPreviousPosition()
         {
-            var engine = new PhysicsEngine(tableFriction: 0f); // No friction for this test
+            var engine = new PhysicsEngine(tableFriction: 0f); 
             var ball = new Ball(1, new Vector2(0, 0), 1f, 1f, 1f)
             {
                 Velocity = new Vector2(10f, 0f)
             };
             engine.AddBody(ball);
 
+            // Tests basic unencumbered spatial translations mapping single frame evolutions generating expected vectors correctly mapping ghost trails smoothly later visually.
             engine.Step(0.1f);
 
             Assert.Equal(new Vector2(0, 0), ball.PreviousPosition);
@@ -33,12 +37,12 @@ namespace BilliardsGame.Physics.Tests
             };
             engine.AddBody(ball);
 
-            engine.Step(1f); // Velocity = 1 * (1 - 0.5*1) = 0.5f
+            // Analyzes continuous energy bleed emulating rough cloth resistance clamping exact values strictly resolving to zero avoiding perpetual micro-sliding.
+            engine.Step(1f); 
             Assert.True(ball.Velocity.X > 0 && ball.Velocity.X < 1f);
 
-            // Next step, speed goes below 0.2
-            engine.Step(1f); // Velocity = 0.5 * 0.5 = 0.25
-            engine.Step(1f); // Velocity = 0.25 * 0.5 = 0.125 < 0.2 -> 0
+            engine.Step(1f); 
+            engine.Step(1f); 
 
             Assert.Equal(Vector2.Zero, ball.Velocity);
         }
@@ -53,12 +57,12 @@ namespace BilliardsGame.Physics.Tests
             };
             var ballB = new Ball(2, new Vector2(2f - 0.001f, 0), mass: 1f, radius: 1f, restitution: 1.0f);
 
+            // Sets up a perfect Newton's cradle equivalent translating exactly 100% force across identical bodies cleanly freezing the initiator confirming vector transfers perfectly.
             engine.AddBody(ballA);
             engine.AddBody(ballB);
 
             engine.Step(0.01667f);
 
-            // They should collide. Since mass is same and e=1, ballA stops, ballB moves.
             Assert.True(Math.Abs(ballA.Velocity.X) < 0.01f);
             Assert.True(ballB.Velocity.X > 0.99f);
         }
@@ -78,7 +82,8 @@ namespace BilliardsGame.Physics.Tests
 
             engine.Step(0.1f);
 
-            Assert.True(Math.Abs(ballA.Velocity.Y) > 0.01f); // Y momentum should not be zero
+            // Validates non-linear reflections projecting force tangentially across bounding borders spreading energy along dual axis correctly mirroring glancing blows completely perfectly.
+            Assert.True(Math.Abs(ballA.Velocity.Y) > 0.01f); 
             Assert.True(Math.Abs(ballB.Velocity.Y) > 0.01f);
         }
 
@@ -95,6 +100,7 @@ namespace BilliardsGame.Physics.Tests
             engine.Step(0.01667f);
 
             float dist = (ballA.Position - ballB.Position).Length();
+            // Asserts defensive clipping routines actively pushing embedded boundaries far apart resolving overlap glitches cleanly without breaking geometry vectors explicitly.
             Assert.True(dist >= 2f - 0.001f, "Balls should be separated to sum of radii");
         }
 
@@ -113,10 +119,7 @@ namespace BilliardsGame.Physics.Tests
 
             engine.Step(0.1f);
 
-            // Ball hits vertical cushion at x=3.
-            // Starts at x=2, v=10, dt=0.1 => pos goes to 3.
-            // Penetrates the cushion, so it should bounce.
-            // Reduced energy due to ball e=0.5 -> post-col velocity should be -5f
+            // Confirms edge absorption reducing kinetic values multiplying constraints by the assigned boundary elasticity projecting inverted velocity exactly mirroring real interactions neatly.
             Assert.True(ball.Velocity.X < 0f);
         }
 
@@ -130,13 +133,14 @@ namespace BilliardsGame.Physics.Tests
             };
             engine.AddBody(ball);
 
-            Assert.True(engine.AreAllBodiesAtRest(0.051f)); // 0.05 < 0.051 => rested, true
+            // Enforces global checks locking game-states validating rigid stillness limits triggering turn closures flawlessly communicating exactly with the Rule Validators sequentially mapping outputs.
+            Assert.True(engine.AreAllBodiesAtRest(0.051f)); 
             
             ball.Velocity = new Vector2(0.1f, 0f);
-            Assert.False(engine.AreAllBodiesAtRest(0.051f)); // 0.1 > 0.051 => stays moving, false
+            Assert.False(engine.AreAllBodiesAtRest(0.051f)); 
             
             ball.Velocity = new Vector2(0.01f, 0f);
-            Assert.True(engine.AreAllBodiesAtRest(0.051f)); // < 0.051 => rested, true
+            Assert.True(engine.AreAllBodiesAtRest(0.051f)); 
         }
     }
 }

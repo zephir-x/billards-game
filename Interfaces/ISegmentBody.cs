@@ -1,24 +1,24 @@
-﻿using System.Numerics;
+using System.Numerics;
 
 namespace BilliardsGame.Interfaces
 {
     /// <summary>
-    /// Represents a line segment physical entity in the physics simulation.
+    /// Represents a static geometric linear segment mapped within the physics simulation, such as a table cushion.
     /// </summary>
     public interface ISegmentBody : IPhysicsBody
     {
         /// <summary>
-        /// Starting point of the segment in world space.
+        /// Absolute coordinate origin where the segment wall begins in world space.
         /// </summary>
         Vector2 StartPoint { get; }
 
         /// <summary>
-        /// Ending point of the segment in world space.
+        /// Absolute coordinate termination where the segment wall concludes in world space.
         /// </summary>
         Vector2 EndPoint { get; }
 
         /// <summary>
-        /// Normalized normal vector of the segment surface.
+        /// Pre-calculated normalized perpendicular vector dictating angular reflection trajectories.
         /// </summary>
         Vector2 Normal { get; }
     }

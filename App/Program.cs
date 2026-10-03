@@ -1,4 +1,4 @@
-using BilliardsGame.Interfaces.Enums;
+﻿using BilliardsGame.Interfaces.Enums;
 using BilliardsGame.Interfaces.Models;
 using System;
 using System.Numerics;
@@ -10,26 +10,54 @@ using Raylib_cs;
 
 namespace BilliardsGame.App
 {
+    /// <summary>
+    /// Acts as the primary Composition Root explicitly defining dependency injection wiring and controlling the main execution sequence thread limiters.
+    /// </summary>
     class Program
     {
         static void Main()
         {
+            // Stage 1: Absolute graphical engine initialization configuring platform integrations.
             Raylib.SetConfigFlags(ConfigFlags.Msaa4xHint);
+            Raylib.SetTraceLogLevel(TraceLogLevel.None);
+            Raylib.SetTraceLogLevel(TraceLogLevel.None);
             Raylib.InitWindow(1600, 900, "2D Billiards Game");
+            Image icon = Raylib.GenImageColor(128, 128, Color.Blank);
+            Raylib.ImageDrawCircle(ref icon, 64, 64, 60, new Color(20, 20, 20, 255));
+            Raylib.ImageDrawCircle(ref icon, 64, 64, 30, Color.RayWhite);
+            Raylib.ImageDrawText(ref icon, "8", 54, 45, 40, Color.Black);
+            Raylib.SetWindowIcon(icon);
+            Raylib.UnloadImage(icon);
             Raylib.SetTargetFPS(144); 
             Raylib.SetExitKey(KeyboardKey.Null);
 
-            // Draw frame to banish the Windows default white background instantly
-            Raylib.BeginDrawing();
-            Raylib.ClearBackground(new Color(5, 5, 12, 255));
-            Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
-            int wTextInit = Raylib.MeasureText("Initializing Engine...", 36);
-            Raylib.DrawText("Initializing Engine...", 1600 / 2 - wTextInit / 2, 900 / 2 - 80, 36, Color.RayWhite);
-            Raylib.EndDrawing();
+            // Reusable lambda orchestrating temporary geometry eliminating Windows standard white-screen tearing buffers.
+            Action<string> DrawLoadingFrame = (text) =>
+            {
+                Raylib.BeginDrawing();
+                Raylib.ClearBackground(new Color(5, 5, 12, 255));
+                Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
+                
+                int fSize = 36;
+                int wText = Raylib.MeasureText(text, fSize);
+                Raylib.DrawText(text, 1600 / 2 - wText / 2, 900 / 2 - 80, fSize, Color.RayWhite);
+                
+                float t = (float)Raylib.GetTime() * 360f;
+                
+                // Emulate animated buffer sequence calculating temporal offsets.
+                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t, t + 100f, 32, Color.Gold);
+                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t + 180f, t + 280f, 32, Color.Gold);
+                Raylib.EndDrawing();
+            };
 
+            // Commit a hard UI flush allocating the drawing context correctly into hardware viewports before audio mounts lock the thread.
+            DrawLoadingFrame("Initializing Engine");
+
+            // Setup underlying C-language bindings mapping OS sound channels.
             var audioManager = new AudioManager();
             audioManager.Initialize();
-
+            
+            // Build linear execution pipeline translating blocking I/O calls (HDD->RAM) into a continuous sequence updating the UI frame buffer intermittently.
             Action[] loadSteps = new Action[]
             {
                 () => audioManager.LoadBGM("menu", "Audio/BGM/bgm_menu.mp3"),
@@ -46,35 +74,20 @@ namespace BilliardsGame.App
 
             for (int i = 0; i < loadSteps.Length; i++)
             {
-                // Render spinning loading screen
-                Raylib.BeginDrawing();
-                Raylib.ClearBackground(new Color(5, 5, 12, 255));
-                Raylib.DrawRectangleGradientV(0, 0, 1600, 900, new Color(5, 5, 25, 255), new Color(40, 5, 5, 255));
-                
-                string txt = "Loading Resources";
-                int fSize = 36;
-                int wText = Raylib.MeasureText(txt, fSize);
-                
-                Raylib.DrawText(txt, 1600 / 2 - wText / 2, 900 / 2 - 80, fSize, Color.RayWhite);
-                
-                float t = (float)Raylib.GetTime() * 360f;
-                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t, t + 100f, 32, Color.Gold);
-                Raylib.DrawRing(new Vector2(1600 / 2, 900 / 2 + 20), 20f, 26f, t + 180f, t + 280f, 32, Color.Gold);
-                
-                Raylib.EndDrawing();
-
-                // Load one step
-                loadSteps[i].Invoke();
+                DrawLoadingFrame("Loading Resources");
+                loadSteps[i].Invoke(); // Lock specific thread step safely isolated over rendering ticks.
             }
 
+            // Bind explicitly the domain simulation core establishing absolute rule-set parameters.
             audioManager.PlayBGM("menu", 0.6f);
             var physicsEngine = new PhysicsEngine(1.2f, 8.0f);
+            
+            // Direct structural couplings hooking decoupled simulation collisions straight into concrete hardware Audio execution limits.
             physicsEngine.OnCollisionOccurred += audioManager.PlayCollision;
             physicsEngine.OnCushionHit += audioManager.PlayCushionHit;
             physicsEngine.OnBallPocketed += audioManager.PlayPocketed;
-
             
-            // Table Main Cushions
+            // Construct mapping defining strict table interaction geometries.
             physicsEngine.AddBody(new Cushion(10, new Vector2(230, 200), new Vector2(470, 200), 0.9f));
             physicsEngine.AddBody(new Cushion(11, new Vector2(530, 200), new Vector2(770, 200), 0.9f));
             physicsEngine.AddBody(new Cushion(12, new Vector2(800, 230), new Vector2(800, 570), 0.9f));
@@ -82,7 +95,6 @@ namespace BilliardsGame.App
             physicsEngine.AddBody(new Cushion(14, new Vector2(470, 600), new Vector2(230, 600), 0.9f));
             physicsEngine.AddBody(new Cushion(15, new Vector2(200, 570), new Vector2(200, 230), 0.9f));
 
-            // Table Corner and Middle Jaws (Pocket funnels)
             physicsEngine.AddBody(new Cushion(20, new Vector2(200, 230), new Vector2(180, 210), 0.9f));
             physicsEngine.AddBody(new Cushion(21, new Vector2(210, 180), new Vector2(230, 200), 0.9f));
             physicsEngine.AddBody(new Cushion(22, new Vector2(470, 200), new Vector2(480, 175), 0.9f));
@@ -96,7 +108,7 @@ namespace BilliardsGame.App
             physicsEngine.AddBody(new Cushion(30, new Vector2(230, 600), new Vector2(210, 620), 0.9f));
             physicsEngine.AddBody(new Cushion(31, new Vector2(180, 590), new Vector2(200, 570), 0.9f));
 
-            // Pockets
+            // Define absolute overlapping void destinations verifying rule conditions.
             physicsEngine.AddPocket(new Hole(new Vector2(190, 190), 24f));
             physicsEngine.AddPocket(new Hole(new Vector2(500, 180), 24f));
             physicsEngine.AddPocket(new Hole(new Vector2(810, 190), 24f));
@@ -104,6 +116,7 @@ namespace BilliardsGame.App
             physicsEngine.AddPocket(new Hole(new Vector2(500, 620), 24f));
             physicsEngine.AddPocket(new Hole(new Vector2(810, 610), 24f));
 
+            // Encapsulated setup sequence forcing correct triangular coordinate alignment upon every Match Start or Reset invocation.
             Action setupBalls = () => 
             {
                 var bodies = physicsEngine.GetBodies().ToList();
@@ -154,14 +167,21 @@ namespace BilliardsGame.App
 
             setupBalls();
 
+            // Dependency Injection sequence explicitly registering subsystems onto the Domain supervisor.
             var inputProvider = new RaylibInputProvider();
             var cueController = new CueController();
+            
             cueController.OnCueHit += audioManager.PlayCueHit;
             var gameManager = new GameManager(physicsEngine, cueController, inputProvider);
-            gameManager.OnNotificationEvent += (type) => {
+            
+            // Map subjective logical states directly to Audio feedback.
+            gameManager.OnNotificationEvent += (type) => 
+            {
                 if (type == BilliardsGame.Interfaces.Enums.NotificationType.Foul) audioManager.PlaySFX("foul", 0.08f);
                 else audioManager.PlaySFX("announcement", 0.08f);
             };
+            
+            // Inject new body dynamically resolving Ball-in-Hand penalties.
             gameManager.OnPlaceCueBall += (pos) => 
             {
                 var whiteBall = new Ball(0, pos, 0.15f, 10f, 0.8f, BallType.Cue, 0);
@@ -170,37 +190,53 @@ namespace BilliardsGame.App
             };
 
             gameManager.OnGameOver += () => { audioManager.StopBGM("gameplay"); audioManager.PlayGameOver(); audioManager.PlayBGM("menu", 0.6f); };
+            
+            // Presentational View linking exposing purely UI dependencies and masking physical constraints.
             var sceneData = new SceneParameters(gameManager, physicsEngine, cueController);
             var renderer = new RaylibRenderer();
             renderer.Initialize(sceneData);
+            
             renderer.OnButtonHovered = () => audioManager.PlayUIHover();
             
+            // Link input system to dynamic UI camera space mappings resolving click vectors accurately regardless of resolution.
             inputProvider.SetCoordinateMapper((screenPos) => Raylib.GetScreenToWorld2D(screenPos, renderer.MainCamera));
 
             bool isPaused = false;
             bool shouldExit = false;
 
-            renderer.OnPlayClicked = () => { audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay", 0.4f);
+            // Wire UI Delegates executing domain changes bypassing tightly coupled loop architectures.
+            renderer.OnPlayClicked = () => 
+            { 
+                audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay", 0.4f);
                 inputProvider.ConsumeClickForUI();
                 gameManager.StartGame();
             };
-            renderer.OnExitClicked = () => { audioManager.PlayUIClick();
+            renderer.OnExitClicked = () => 
+            { 
+                audioManager.PlayUIClick();
                 shouldExit = true;
             };
-            renderer.OnContinueClicked = () => { audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay");
+            renderer.OnContinueClicked = () => 
+            { 
+                audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay");
                 inputProvider.ConsumeClickForUI();
                 isPaused = false;
             };
-            renderer.OnRestartClicked = () => { audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay", 0.4f);
+            renderer.OnRestartClicked = () => 
+            { 
+                audioManager.PlayUIClick(); audioManager.StopBGM("menu"); audioManager.PlayBGM("gameplay", 0.4f);
                 inputProvider.ConsumeClickForUI();
                 isPaused = false;
                 setupBalls();
                 gameManager.StartGame();
             };
 
+            // Main Execution Frame Configuration mappings:
+            // High-fidelity rendering allowed completely decoupled against a locked rigid 480hz physics evaluation system.
             float accumulator = 0f;
             const float dt = 1f / 480f;
 
+            // Application Spinlock Sequence
             while (!Raylib.WindowShouldClose() && !shouldExit)
             {
                 inputProvider.Update();
@@ -219,6 +255,7 @@ namespace BilliardsGame.App
                     isPaused = false;
                 }
 
+                // Protect systems against freeze spikes disrupting calculations.
                 float frameTime = Raylib.GetFrameTime();
                 if (frameTime > 0.1f) frameTime = 0.1f;
                 
@@ -227,8 +264,11 @@ namespace BilliardsGame.App
                 if (!isPaused)
                 {
                     accumulator += frameTime;
+                    
+                    // Trigger abstract domain processes resolving turn rules based solely on delta scales.
                     gameManager.UpdateLogic(frameTime);
 
+                    // Execute deterministically strict physics sub-steps protecting collision resolution depths regardless of display lags.
                     while (accumulator >= dt)
                     {
                         physicsEngine.Step(dt);
@@ -237,12 +277,19 @@ namespace BilliardsGame.App
                 }
 
                 audioManager.Update();
+                
+                // Expose visual accumulation blending physics limits gracefully against uncapped native monitor FPS.
                 float alpha = isPaused ? 0f : (accumulator / dt);
                 renderer.DrawFrame(alpha);
             }
 
+            // Cleanup cycle unbinding C-pointers safely matching the OS shutdown sequences.
             audioManager.Deinitialize();
             Raylib.CloseWindow();
         }
     }
 }
+
+
+
+
