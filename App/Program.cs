@@ -19,7 +19,15 @@ namespace BilliardsGame.App
         {
             // Stage 1: Absolute graphical engine initialization configuring platform integrations.
             Raylib.SetConfigFlags(ConfigFlags.Msaa4xHint);
+            Raylib.SetTraceLogLevel(TraceLogLevel.None);
+            Raylib.SetTraceLogLevel(TraceLogLevel.None);
             Raylib.InitWindow(1600, 900, "2D Billiards Game");
+            Image icon = Raylib.GenImageColor(128, 128, Color.Blank);
+            Raylib.ImageDrawCircle(ref icon, 64, 64, 60, new Color(20, 20, 20, 255));
+            Raylib.ImageDrawCircle(ref icon, 64, 64, 30, Color.RayWhite);
+            Raylib.ImageDrawText(ref icon, "8", 54, 45, 40, Color.Black);
+            Raylib.SetWindowIcon(icon);
+            Raylib.UnloadImage(icon);
             Raylib.SetTargetFPS(144); 
             Raylib.SetExitKey(KeyboardKey.Null);
 
@@ -281,3 +289,7 @@ namespace BilliardsGame.App
         }
     }
 }
+
+
+
+

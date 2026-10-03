@@ -109,7 +109,7 @@ The project is a 2D billiards simulation built in .NET, focusing on precise phys
   - [x] **Menu Sliding Capabilities:** Revamp the strict UI block transitions to utilize viewport easing matrices (sliding menus left/right into play space smoothly). Bounded delta time (max 0.033s) to prevent erratic slides. Overhauled button styles and background dimming gradients.
   - [x] **Audio Implementation:** Utilize Raylib-cs audio device module. Added OnNotificationEvent hooked explicitly for rendering feedback SFX (fouls, assignments). Eased volume scales preventing audio peaking.
   - [x] **Codebase Standardization:** Implement broad Roslyn fixes unifying XML <summary> formatting, dropping stale Polish comments explicitly favoring robust structural C# documentation per interface. Format spaces and generic layouts globally.
-  - [ ] **Repository & Release Distribution:** Formalize a README.md containing topics, installation parameters, architecture mapping. Structure a dotnet publish -c Release -r win-x64 --self-contained workflow delivering a bundled .exe zip archive with custom .ico binaries.
+  - [x] **Repository & Release Distribution:** Formalize a README.md containing topics, installation parameters, architecture mapping. Structure a dotnet publish -c Release -r win-x64 --self-contained workflow delivering a bundled .exe zip archive with custom .ico binaries.
 
 ---
 
